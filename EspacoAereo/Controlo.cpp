@@ -28,7 +28,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 	val = _setmode(_fileno(stdout), _O_WTEXT);
 	val = _setmode(_fileno(stderr), _O_WTEXT);
 #endif
-
+	
 
 	//TODO verificar se ja está a correr antes de inicar as cenas, se ja estiver a correr avisa e termina
 

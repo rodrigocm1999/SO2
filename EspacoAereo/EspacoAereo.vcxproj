@@ -117,6 +117,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\Tudo\School\SO2\Trabalho\EspacoAereo\dlls;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -145,6 +146,7 @@
     <ClCompile Include="PVector.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\dlls\SO2_TP_DLL_2021.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="PVector.h" />
   </ItemGroup>
