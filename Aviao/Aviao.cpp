@@ -19,15 +19,21 @@ using namespace std;
 #define tstringstream stringstream
 #endif
 
-#define BUFFER_SIZE 512
 
-int _tmain(int argc, LPTSTR argv[]) {
+int _tmain(int argc, TCHAR **argv) {
 
 #ifdef UNICODE
 	int val = _setmode(_fileno(stdin), _O_WTEXT);
 	val = _setmode(_fileno(stdout), _O_WTEXT);
 	val = _setmode(_fileno(stderr), _O_WTEXT);
 #endif
+
+
+	int capacity = _ttoi(argv[1]);
+	int velocity = _ttoi(argv[2]);
+	TCHAR* startingPort = argv[3];
+
+
 
 	//TODO Interação / Comandos:
 	//	Definir o próximo destino(depois de iniciada a viagem este não pode ser alterado).

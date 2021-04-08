@@ -19,9 +19,7 @@ using namespace std;
 #define tstringstream stringstream
 #endif
 
-#define BUFFER_SIZE 512
-
-int _tmain(int argc, LPTSTR argv[]) {
+int _tmain(int argc, TCHAR **argv) {
 
 #ifdef UNICODE
 	int val = _setmode(_fileno(stdin), _O_WTEXT);
@@ -29,9 +27,17 @@ int _tmain(int argc, LPTSTR argv[]) {
 	val = _setmode(_fileno(stderr), _O_WTEXT);
 #endif
 
+
+	TCHAR* originPort = argv[1];
+	TCHAR* destinPort = argv[2];
+	TCHAR* personName = argv[3];
+	int maxWatingTimeInSeconds = 0;
+	if (argc > 4) {
+		maxWatingTimeInSeconds = _ttoi(argv[4]);
+	}
+
+
 	//TODO Funcionamento: 
-	//	É indicado por argumento da linha de comandos o aeroporto de origem, o aeroporto de destino, o nome do passageiro, e, opcionalmente,
-	//	o tempo(em segundos) que fica a aguardar até embarcar.Os nomes dos aeroportos origem e destino devem existir no sistema, caso contrário o programa termina de imediato
 	//	O passageiro é atribuído ao aeroporto origem, ficando a aguardar que exista um avião disponível para o aeroporto destino. 
 	//		Quando tal avião existir, o passageiro embarca automaticamente e, ao chegar ao aeroporto destino, desembarca e o programa termina.
 	//		Caso tenha sido indicado um tempo de espera máximo, o passageiro desiste automaticamente de viajar se o tempo indicado passar 

@@ -24,6 +24,12 @@
     <ClCompile Include="PVector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Airport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RegistryStuff.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Map.h">
@@ -32,7 +38,10 @@
     <ClInclude Include="PVector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\dlls\SO2_TP_DLL_2021.h">
+    <ClInclude Include="Airport.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RegistryStuff.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

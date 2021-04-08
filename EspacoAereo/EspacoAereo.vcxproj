@@ -117,7 +117,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Tudo\School\SO2\Trabalho\EspacoAereo\dlls;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -141,14 +141,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Airport.cpp" />
     <ClCompile Include="Controlo.cpp" />
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="PVector.cpp" />
+    <ClCompile Include="RegistryStuff.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\dlls\SO2_TP_DLL_2021.h" />
+    <ClInclude Include="Airport.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="PVector.h" />
+    <ClInclude Include="RegistryStuff.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

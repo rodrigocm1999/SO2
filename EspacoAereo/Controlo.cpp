@@ -4,31 +4,35 @@
 #include <io.h>
 #include <iostream>
 #include <string>
+#include "RegistryStuff.h"
 
 using namespace std;
 
 #ifdef UNICODE
-#define tcout wcout
-#define tcin wcin
-#define tstring wstring
-#define tstringstream wstringstream
+#define tcout std::wcout
+#define tcin std::wcin
+#define tstring std::wstring
+#define tstringstream std::wstringstream
 #else
-#define tcout cout
-#define tcin cin
-#define tstring string
-#define tstringstream stringstream
+#define tcout std::cout
+#define tcin std::cin
+#define tstring std::string
+#define tstringstream std::stringstream
 #endif
 
-#define BUFFER_SIZE 512
 
-int _tmain(int argc, LPTSTR argv[]) {
+int _tmain(int argc, TCHAR **argv) {
 
 #ifdef UNICODE
 	int val = _setmode(_fileno(stdin), _O_WTEXT);
 	val = _setmode(_fileno(stdout), _O_WTEXT);
 	val = _setmode(_fileno(stderr), _O_WTEXT);
 #endif
-	
+
+	int max_planes = get_max_planes_from_registry();
+
+	tcout << "Max planes from registry : " << max_planes << endl;
+
 
 	//TODO verificar se ja está a correr antes de inicar as cenas, se ja estiver a correr avisa e termina
 
