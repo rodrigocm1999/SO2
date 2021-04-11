@@ -5,6 +5,8 @@
 #include <iostream>
 #include <string>
 #include "RegistryStuff.h"
+#include "Controlo.h"
+#include "Utils.h"
 
 using namespace std;
 
@@ -21,7 +23,7 @@ using namespace std;
 #endif
 
 
-int _tmain(int argc, TCHAR **argv) {
+int _tmain(int argc, TCHAR** argv) {
 
 #ifdef UNICODE
 	int val = _setmode(_fileno(stdin), _O_WTEXT);
@@ -29,12 +31,34 @@ int _tmain(int argc, TCHAR **argv) {
 	val = _setmode(_fileno(stderr), _O_WTEXT);
 #endif
 
+	//Check if is already running --------------------------------------------
+	CreateMutexA(0, FALSE, "Airport_Control");
+	// Tries to create a mutex with the specified name
+	// If the application is already running it cant create another mutex with the same name
+	if (GetLastError() == ERROR_ALREADY_EXISTS) {
+		tcout << _T("Process already running\n");
+		return -1;
+	}
+	// -----------------------------------------------------------------------
+
+
+	//Get max planes amount from registry ------------------------------------
 	int max_planes = get_max_planes_from_registry();
-
 	tcout << "Max planes from registry : " << max_planes << endl;
+	// -----------------------------------------------------------------------
 
 
-	//TODO verificar se ja está a correr antes de inicar as cenas, se ja estiver a correr avisa e termina
+	while (1) {
+		tstring input;
+		tcin >> input;
+
+
+		if (input == _T("newport")) {
+			
+		}
+
+	}
+	
 
 	//TODO o controlo vai ter sempre uma maneira de comunicar os os aviões e passageiros. Talvez criar classes para esconder a merda
 

@@ -146,12 +146,15 @@
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="PVector.cpp" />
     <ClCompile Include="RegistryStuff.cpp" />
+    <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Airport.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="PVector.h" />
     <ClInclude Include="RegistryStuff.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="Utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
