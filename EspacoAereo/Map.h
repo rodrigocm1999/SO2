@@ -4,8 +4,7 @@
 
 #define MAPSIZE 1000
 
-class Map
-{
+class Map {
 	
 	std::vector<PVector> map;
 

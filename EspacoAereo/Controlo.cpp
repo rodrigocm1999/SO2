@@ -7,6 +7,8 @@
 #include "RegistryStuff.h"
 #include "Controlo.h"
 #include "Utils.h"
+#include "CircularBuffer.h"
+#include "SharedConstants.h"
 
 using namespace std;
 
@@ -31,8 +33,10 @@ int _tmain(int argc, TCHAR** argv) {
 	val = _setmode(_fileno(stderr), _O_WTEXT);
 #endif
 
+	HANDLE process_lock_mutex, planes_semaphore;
+
 	//Check if is already running --------------------------------------------
-	CreateMutexA(0, FALSE, "Airport_Control");
+	process_lock_mutex = CreateMutexW(0, FALSE, _T("Airport_Control"));
 	// Tries to create a mutex with the specified name
 	// If the application is already running it cant create another mutex with the same name
 	if (GetLastError() == ERROR_ALREADY_EXISTS) {
@@ -45,6 +49,18 @@ int _tmain(int argc, TCHAR** argv) {
 	//Get max planes amount from registry ------------------------------------
 	int max_planes = get_max_planes_from_registry();
 	tcout << "Max planes from registry : " << max_planes << endl;
+	//Create Semaphore that control max planes at a moment
+	planes_semaphore = CreateSemaphoreW(NULL, 0, max_planes, _T(SEMAPHORE_NAME_MAX_PLANES));
+	if (planes_semaphore == NULL) {
+		tcout << _T("Semaphore already exists -> ") << GetLastError() << endl;
+		return -1;
+	}
+	// -----------------------------------------------------------------------
+
+
+	// -----------------------------------------------------------------------
+	HANDLE timer = CreateWaitableTimer(NULL, TRUE, NULL);
+	WaitForSingleObject(timer, INFINITE);
 	// -----------------------------------------------------------------------
 
 
@@ -52,13 +68,11 @@ int _tmain(int argc, TCHAR** argv) {
 		tstring input;
 		tcin >> input;
 
-
 		if (input == _T("newport")) {
-			
-		}
 
+		}
 	}
-	
+
 
 	//TODO o controlo vai ter sempre uma maneira de comunicar os os aviões e passageiros. Talvez criar classes para esconder a merda
 

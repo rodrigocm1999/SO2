@@ -4,6 +4,7 @@
 #include <io.h>
 #include <iostream>
 #include <string>
+#include "../EspacoAereo/SharedConstants.h" //TODO fix this shoit
 
 using namespace std;
 
@@ -20,7 +21,7 @@ using namespace std;
 #endif
 
 
-int _tmain(int argc, TCHAR **argv) {
+int _tmain(int argc, TCHAR** argv) {
 
 #ifdef UNICODE
 	int val = _setmode(_fileno(stdin), _O_WTEXT);
@@ -28,10 +29,30 @@ int _tmain(int argc, TCHAR **argv) {
 	val = _setmode(_fileno(stderr), _O_WTEXT);
 #endif
 
+	if (argc < 4) {
+		tcout << _T("Missing arguments\n");
+		return -1;
+	}
 
 	int capacity = _ttoi(argv[1]);
 	int velocity = _ttoi(argv[2]);
 	TCHAR* startingPort = argv[3];
+
+	HANDLE semaphore_plane_counter = OpenSemaphoreW(NULL, 0, _T(SEMAPHORE_NAME_MAX_PLANES));
+
+	if (semaphore_plane_counter == NULL) {
+		tcout << _T("Error opening semaphore -> ") << GetLastError() << endl;
+		return -1;
+	}
+
+	WaitForSingleObject(semaphore_plane_counter, INFINITY);
+
+
+	int dsa;
+	tcin >> dsa;
+
+	ReleaseSemaphore(semaphore_plane_counter, 1, NULL);
+
 
 
 
