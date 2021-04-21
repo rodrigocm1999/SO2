@@ -33,28 +33,24 @@ int _tmain(int argc, TCHAR** argv) {
 		tcout << _T("Missing arguments\n");
 		return -1;
 	}
-
 	int capacity = _ttoi(argv[1]);
 	int velocity = _ttoi(argv[2]);
 	TCHAR* startingPort = argv[3];
 
-	HANDLE semaphore_plane_counter = OpenSemaphoreW(NULL, 0, _T(SEMAPHORE_NAME_MAX_PLANES));
 
+	HANDLE semaphore_plane_counter = OpenSemaphoreW(NULL, FALSE, SEMAPHORE_NAME_MAX_PLANES);
 	if (semaphore_plane_counter == NULL) {
 		tcout << _T("Error opening semaphore -> ") << GetLastError() << endl;
 		return -1;
 	}
-
 	WaitForSingleObject(semaphore_plane_counter, INFINITY);
+
 
 
 	int dsa;
 	tcin >> dsa;
 
 	ReleaseSemaphore(semaphore_plane_counter, 1, NULL);
-
-
-
 
 	//TODO Interação / Comandos:
 	//	Definir o próximo destino(depois de iniciada a viagem este não pode ser alterado).

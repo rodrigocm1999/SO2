@@ -49,8 +49,9 @@ int _tmain(int argc, TCHAR** argv) {
 	//Get max planes amount from registry ------------------------------------
 	int max_planes = get_max_planes_from_registry();
 	tcout << "Max planes from registry : " << max_planes << endl;
+	
 	//Create Semaphore that control max planes at a moment
-	planes_semaphore = CreateSemaphoreW(NULL, 0, max_planes, _T(SEMAPHORE_NAME_MAX_PLANES));
+	planes_semaphore = CreateSemaphoreW(NULL, max_planes, max_planes, SEMAPHORE_NAME_MAX_PLANES);
 	if (planes_semaphore == NULL) {
 		tcout << _T("Semaphore already exists -> ") << GetLastError() << endl;
 		return -1;
@@ -58,13 +59,42 @@ int _tmain(int argc, TCHAR** argv) {
 	// -----------------------------------------------------------------------
 
 
+	HANDLE semaphore_plane_counter = OpenSemaphoreW(NULL, FALSE, SEMAPHORE_NAME_MAX_PLANES);
+	if (semaphore_plane_counter == NULL) {
+		tcout << _T("Error opening semaphore -> ") << GetLastError() << endl;
+		return -1;
+	}
+
 	// -----------------------------------------------------------------------
 	HANDLE timer = CreateWaitableTimer(NULL, TRUE, NULL);
-	WaitForSingleObject(timer, INFINITE);
+	//WaitForSingleObject(timer, INFINITE);
 	// -----------------------------------------------------------------------
+
+
+
+	//Create Shared Memory ---------------------------------------------------
+
+	/*DWORD shared_memory_size = 0; //TODO add sizeof(estrutura com tudo o que é partilhado)
+	HANDLE handleMappedFile;
+	LPCTSTR sharedMemPointer;
+
+	handleMappedFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, shared_memory_size, MAPPED_MEMORY_IDENTIFIER);
+
+	if (handleMappedFile == NULL) {
+		_tprintf(_T("Could not create file mapping object (%d).\n"), GetLastError());
+		return 1;
+	}
+	sharedMemPointer = (LPTSTR)MapViewOfFile(handleMappedFile, FILE_MAP_ALL_ACCESS, 0, 0, shared_memory_size);
+
+	if (sharedMemPointer == NULL) {
+		_tprintf(_T("Could not map view of file (%d).\n"), GetLastError());
+		CloseHandle(handleMappedFile);
+		return 1;
+	}*/
 
 
 	while (1) {
+		tcout << _T("Menu -------------\n");
 		tstring input;
 		tcin >> input;
 
@@ -72,6 +102,10 @@ int _tmain(int argc, TCHAR** argv) {
 
 		}
 	}
+
+
+	//UnmapViewOfFile(sharedMemPointer);
+	//CloseHandle(handleMappedFile);
 
 
 	//TODO o controlo vai ter sempre uma maneira de comunicar os os aviões e passageiros. Talvez criar classes para esconder a merda
