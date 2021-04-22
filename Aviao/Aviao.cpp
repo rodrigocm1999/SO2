@@ -47,7 +47,7 @@ int _tmain(int argc, TCHAR** argv) {
 			tcout << _T("Error opening semaphore -> ") << GetLastError() << endl;
 			return -1;
 		}
-		DWORD result = WaitForSingleObject(semaphore_plane_counter, INFINITE);
+		DWORD result = WaitForSingleObject(semaphore_plane_counter, INFINITE);  // Waits for the Control to have space for this plane
 		if (result != WAIT_OBJECT_0) {
 			tcout << _T("Error waiting for the semaphore -> ") << GetLastError() << endl;
 			return -1;

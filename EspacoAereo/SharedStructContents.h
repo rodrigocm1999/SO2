@@ -15,7 +15,14 @@
 #define PLANE_LEAVES 30
 #define PLANE_CRASHES 31
 
-#define MAX_PLANES 10
+#define MAX_PLANES 5
+
+#define MUTEX_GET "AIRPORT_MUTEX_GET";
+#define MUTEX_SET "AIRPORT_MUTEX_SET";
+#define MUTEX_EMPTY_SPOT "AIRPORT_MUTEX_EMPTY_SPOT";
+#define MUTEX_AVAILABLE_ITEM "AIRPORT_MUTEX_AVAILABLE_ITEM";
+#define CONTROL_WROTE_EVENT "AIRPORT_CONTROL_WROTE_EVENT";
+#define PLANE_WROTE_EVENT "AIRPORT_PLANE_WROTE_EVENT";
 
 
 typedef union {
@@ -24,8 +31,9 @@ typedef union {
 
 typedef struct {
 	int type;
+	int plane_id;
 	Data data;
-}Message;
+}PlaneMessage;
 
 
 typedef struct {

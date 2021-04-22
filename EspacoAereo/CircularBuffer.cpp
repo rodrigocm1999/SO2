@@ -3,9 +3,9 @@
 #include <iostream>
 
 template<typename T>
-CircularBuffer<T>::CircularBuffer(int size_in_elements) {
+CircularBuffer<T>::CircularBuffer(struct CircBuffer<T>* data) {
 	mutex_get = CreateMutex(NULL, FALSE, NULL);
-	mutex_set = CreateMutex(NULL, FALSE, NULL);
+	mutex_set = CreateMutex(NULL, FALSE, NULL);//TODO put names on these shits
 	mutex_empty_spot = CreateMutex(NULL, FALSE, NULL);
 	mutex_available_item = CreateMutex(NULL, FALSE, NULL);
 
@@ -14,14 +14,8 @@ CircularBuffer<T>::CircularBuffer(int size_in_elements) {
 		throw std::exception();
 	}
 
-	this->buffer_size = size_in_elements;
-	this->buffer = malloc(sizeof(T) * buffer_size); //TODO cant do this shit
+	this->data = data;
 }
-//TODO change the mutexeress to the right place as in this moment they are 
-// created in the process they are called from and stay with pointers in sharred memorry and erros
-
-template<typename T>
-CircularBuffer<T>::CircularBuffer() : CircularBuffer(10) {}
 
 template<typename T>
 CircularBuffer<T>::~CircularBuffer() {
@@ -29,7 +23,6 @@ CircularBuffer<T>::~CircularBuffer() {
 	CloseHandle(mutex_set);
 	CloseHandle(mutex_empty_spot);
 	CloseHandle(mutex_available_item);
-	free(buffer);
 }
 
 
@@ -39,8 +32,8 @@ T CircularBuffer<T>::get_next_element() {
 	WaitForSingleObject(mutex_available_item, INFINITE);
 	WaitForSingleObject(mutex_get, INFINITE);
 
-	T item = buffer[out];
-	out = (out + 1) % buffer_size;
+	T item = data->buffer[data->out];
+	data->out = (data->out + 1) % data->buffer_size;
 
 	ReleaseMutex(mutex_get);
 	ReleaseMutex(mutex_empty_spot);
@@ -49,13 +42,13 @@ T CircularBuffer<T>::get_next_element() {
 }
 
 template<typename T>
-void CircularBuffer<T>::set_next_element(T &element) {
+void CircularBuffer<T>::set_next_element(T& element) {
 
 	WaitForSingleObject(mutex_empty_spot, INFINITE);
 	WaitForSingleObject(mutex_set, INFINITE);
 
-	buffer[in] = element;
-	in = (in + 1) % buffer_size;
+	data->buffer[data->in] = element;
+	data->in = (data->in + 1) % data->buffer_size;
 
 	ReleaseMutex(mutex_set);
 	ReleaseMutex(mutex_available_item);
