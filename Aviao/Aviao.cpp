@@ -4,20 +4,23 @@
 #include <io.h>
 #include <iostream>
 #include <string>
-#include "../EspacoAereo/SharedConstants.h" //TODO fix this shoit
+#include <vector>
+#include "../EspacoAereo/Utils.h"
+#include "../EspacoAereo/SharedStructContents.h"
+
 
 using namespace std;
 
 #ifdef UNICODE
-#define tcout wcout
-#define tcin wcin
-#define tstring wstring
-#define tstringstream wstringstream
+#define tcout std::wcout
+#define tcin std::wcin
+#define tstring std::wstring
+#define tstringstream std::wstringstream
 #else
-#define tcout cout
-#define tcin cin
-#define tstring string
-#define tstringstream stringstream
+#define tcout std::cout
+#define tcin std::cin
+#define tstring std::string
+#define tstringstream std::stringstream
 #endif
 
 
@@ -38,17 +41,44 @@ int _tmain(int argc, TCHAR** argv) {
 	TCHAR* startingPort = argv[3];
 
 
-	HANDLE semaphore_plane_counter = OpenSemaphoreW(NULL, FALSE, SEMAPHORE_NAME_MAX_PLANES);
-	if (semaphore_plane_counter == NULL) {
-		tcout << _T("Error opening semaphore -> ") << GetLastError() << endl;
-		return -1;
+	HANDLE semaphore_plane_counter = OpenSemaphoreW(SEMAPHORE_ALL_ACCESS, FALSE, SEMAPHORE_NAME_MAX_PLANES);
+	{
+		if (semaphore_plane_counter == NULL) {
+			tcout << _T("Error opening semaphore -> ") << GetLastError() << endl;
+			return -1;
+		}
+		DWORD result = WaitForSingleObject(semaphore_plane_counter, INFINITE);
+		if (result != WAIT_OBJECT_0) {
+			tcout << _T("Error waiting for the semaphore -> ") << GetLastError() << endl;
+			return -1;
+		}
 	}
-	WaitForSingleObject(semaphore_plane_counter, INFINITY);
+
+	while (true) {
+		tcout << _T("> ");
+		tstring input;
+		tcin >> input;
+		vector<tstring> input_parts = stringSplit(input, _T(" "));
+		auto command = input_parts[0];
+
+		if (command == _T("destiny")) {
+			// put result[1] on menuset_destiny(result[1]);
+		}
+		else if (command == _T("board")) {
+
+		}
+		else if (command == _T("fly")) {
+			// put result[1] on 
+		}
+		else if (command == _T("exit")) {
+			// put result[1] on 
+		}
+		else {
+			tcout << _T("----- Comands available ----- \n destiny <name>\n board\n fly\n exit") << endl;
+		}
+	}
 
 
-
-	int dsa;
-	tcin >> dsa;
 
 	ReleaseSemaphore(semaphore_plane_counter, 1, NULL);
 

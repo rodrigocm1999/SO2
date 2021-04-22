@@ -21,16 +21,13 @@
     <ClCompile Include="Map.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PVector.cpp">
+    <ClCompile Include="Position.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Airport.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="RegistryStuff.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CircularBuffer.cpp">
@@ -41,7 +38,7 @@
     <ClInclude Include="Map.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PVector.h">
+    <ClInclude Include="Position.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Airport.h">
@@ -59,7 +56,10 @@
     <ClInclude Include="CircularBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SharedConstants.h">
+    <ClInclude Include="SharedStructContents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TextInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

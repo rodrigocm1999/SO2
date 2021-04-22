@@ -1,8 +1,6 @@
 #pragma once
 #include<Windows.h>
 
-// TODO test all of this
-
 template <typename T>
 class CircularBuffer {
 	

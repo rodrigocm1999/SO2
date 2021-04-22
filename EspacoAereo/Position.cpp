@@ -1,23 +1,23 @@
-#include "PVector.h"
+#include "Position.h"
 
 #include <math.h>
 
-PVector::PVector(int x, int y){
+Position::Position(int x, int y){
 	this->x = x;
 	this->y = y;
 }
 
-int PVector::grid_distance(const PVector& other)
+int Position::grid_distance(const Position& other)
 {
 	return  abs(this->x - other.x) + abs(this->y - other.y);
 }
 
-float PVector::distance(const PVector& other)
+float Position::distance(const Position& other)
 {
 	float dx = x - other.x;
 	float dy = y - other.y;
 	return (float)sqrt(dx * dx + dy * dy);
 }
 
-PVector::PVector() : PVector(0, 0){
+Position::Position() : Position(0, 0){
 }

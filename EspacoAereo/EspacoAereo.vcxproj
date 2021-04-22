@@ -145,18 +145,18 @@
     <ClCompile Include="CircularBuffer.cpp" />
     <ClCompile Include="Controlo.cpp" />
     <ClCompile Include="Map.cpp" />
-    <ClCompile Include="PVector.cpp" />
+    <ClCompile Include="Position.cpp" />
     <ClCompile Include="RegistryStuff.cpp" />
-    <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Airport.h" />
     <ClInclude Include="CircularBuffer.h" />
     <ClInclude Include="Map.h" />
-    <ClInclude Include="PVector.h" />
+    <ClInclude Include="Position.h" />
     <ClInclude Include="RegistryStuff.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="SharedConstants.h" />
+    <ClInclude Include="SharedStructContents.h" />
+    <ClInclude Include="TextInterface.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

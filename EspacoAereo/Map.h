@@ -1,12 +1,12 @@
 #pragma once
 #include <vector>
-#include "PVector.h"
+#include "Position.h"
 
 #define MAPSIZE 1000
 
 class Map {
 	
-	std::vector<PVector> map;
+	std::vector<Position> map;
 
 public:
 

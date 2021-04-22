@@ -1,24 +1,30 @@
 #pragma once
-#include "PVector.h"
+#include "Position.h"
 #include <string>
 #include <tchar.h>
 
+
 #ifdef UNICODE
-typedef std::wstring tstring;
+#define tcout wcout
+#define tcin wcin
+#define tstring wstring
+#define tstringstream wstringstream
 #else
-typedef std::string tstring;
+#define tcout cout
+#define tcin cin
+#define tstring string
+#define tstringstream stringstream
 #endif
+
 
 class Airport{
 
-	PVector position;
-	tstring name;
+	Position position;
+	std::tstring name;
 
 public:
 	
-
 	Airport(TCHAR *name);
-
 
 };
 

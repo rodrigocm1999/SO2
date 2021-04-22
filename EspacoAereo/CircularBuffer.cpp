@@ -15,8 +15,10 @@ CircularBuffer<T>::CircularBuffer(int size_in_elements) {
 	}
 
 	this->buffer_size = size_in_elements;
-	this->buffer = malloc(sizeof(T) * buffer_size);
+	this->buffer = malloc(sizeof(T) * buffer_size); //TODO cant do this shit
 }
+//TODO change the mutexeress to the right place as in this moment they are 
+// created in the process they are called from and stay with pointers in sharred memorry and erros
 
 template<typename T>
 CircularBuffer<T>::CircularBuffer() : CircularBuffer(10) {}
