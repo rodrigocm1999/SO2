@@ -144,14 +144,15 @@
     <ClCompile Include="Airport.cpp" />
     <ClCompile Include="CircularBuffer.cpp" />
     <ClCompile Include="Controlo.cpp" />
-    <ClCompile Include="Map.cpp" />
+    <ClCompile Include="ControlStructs.cpp" />
     <ClCompile Include="Position.cpp" />
     <ClCompile Include="RegistryStuff.cpp" />
+    <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Airport.h" />
     <ClInclude Include="CircularBuffer.h" />
-    <ClInclude Include="Map.h" />
+    <ClInclude Include="ControlStructs.h" />
     <ClInclude Include="Position.h" />
     <ClInclude Include="RegistryStuff.h" />
     <ClInclude Include="resource.h" />

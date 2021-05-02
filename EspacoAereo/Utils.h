@@ -1,24 +1,12 @@
 #pragma once
+#include <Windows.h>
 #include <vector>
 #include <string>
 
-#ifdef UNICODE
-#define tstring std::wstring
-#else
-#define tstring std::string
-#endif
+#define TSTRING std::basic_string<TCHAR>
 
+std::vector<TSTRING> stringSplit(const TSTRING& ori_str, const TSTRING delimiter);
 
-std::vector<tstring> stringSplit(const tstring& oriStr, const tstring delimiter) {
-	std::vector<tstring> list;
-	tstring str(oriStr);
-	size_t pos;
-	tstring token;
-	while ((pos = str.find(delimiter)) != tstring::npos) {
-		token = str.substr(0, pos);
-		list.push_back(token);
-		str.erase(0, pos + delimiter.length());
-	}
-	list.push_back(str);
-	return list;
-}
+void* allocate_shared_memory(HANDLE& mapped_file,DWORD size);
+
+HANDLE create_thread(LPTHREAD_START_ROUTINE function_to_run, LPVOID argument);

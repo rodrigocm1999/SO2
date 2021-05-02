@@ -1,28 +1,77 @@
-#include <windows.h>
-#include <tchar.h>
+#include <Windows.h>
 #include <fcntl.h>
 #include <io.h>
 #include <iostream>
 #include <string>
 #include <vector>
-#include "../EspacoAereo/Utils.h"
-#include "../EspacoAereo/SharedStructContents.h"
-
+#include "SharedStructContents.h"
+#include "Utils.h"
+#include "CircularBuffer.h"
+#include "PlaneMain.h"
 
 using namespace std;
+
+#define TSTRING std::basic_string<TCHAR>
 
 #ifdef UNICODE
 #define tcout std::wcout
 #define tcin std::wcin
-#define tstring std::wstring
 #define tstringstream std::wstringstream
 #else
 #define tcout std::cout
 #define tcin std::cin
-#define tstring std::string
 #define tstringstream std::stringstream
 #endif
 
+void exit_everything(PlaneMain* plane_main);
+
+DWORD WINAPI receive_updates(LPVOID param) {
+	PlaneMain* plane_main = (PlaneMain*)param;
+
+	while (1) {
+		const PlaneControlMessage message = plane_main->receiving_buffer->get_next_element();
+
+		switch (message.type) {
+		case TYPE_START_TRIP:
+			break;
+		case TYPE_CONTROL_EXITING:
+			tcout << _T("Control Exiting");
+			plane_main->exit = true;
+			exit_everything(plane_main);
+			break;
+		default:
+			tcout << _T("Invalid type received from plane :") << message.plane_offset << endl;
+		}
+	}
+}
+
+DWORD WINAPI heartbeat(LPVOID param) {
+	bool* b = (bool*)param;
+	*b = true;
+	return -1;
+}
+
+void exit_everything(PlaneMain* plane_main) {
+
+	tcout << _T("Exiting\n-----------------------------");
+
+	plane_main->this_plane->in_use = false;
+	PlaneControlMessage message;
+	message.plane_offset = plane_main->this_plane->offset;
+	message.type = TYPE_PLANE_LEAVES;
+	plane_main->control_buffer->set_next_element(message);
+
+	UnmapViewOfFile(plane_main->shared_control);
+	CloseHandle(plane_main->handle_mapped_file);
+	CloseHandle(plane_main->receiving_thread);
+	ReleaseSemaphore(plane_main->semaphore_plane_counter, 1, nullptr);
+
+	delete(plane_main->receiving_buffer);
+	delete(plane_main->control_buffer);
+	delete(plane_main);
+
+	exit(0);
+}
 
 int _tmain(int argc, TCHAR** argv) {
 
@@ -38,49 +87,110 @@ int _tmain(int argc, TCHAR** argv) {
 	}
 	int capacity = _ttoi(argv[1]);
 	int velocity = _ttoi(argv[2]);
-	TCHAR* startingPort = argv[3];
+	TSTRING starting_port = argv[3];
 
-
-	HANDLE semaphore_plane_counter = OpenSemaphoreW(SEMAPHORE_ALL_ACCESS, FALSE, SEMAPHORE_NAME_MAX_PLANES);
+	PlaneMain* plane_main = nullptr;
 	{
-		if (semaphore_plane_counter == NULL) {
-			tcout << _T("Error opening semaphore -> ") << GetLastError() << endl;
+		const HANDLE semaphore_plane_counter = OpenSemaphoreW(SEMAPHORE_ALL_ACCESS, FALSE, SEMAPHORE_MAX_PLANES);
+		{
+			if (semaphore_plane_counter == NULL) {
+				tcout << _T("Error opening semaphore -> ") << GetLastError() << endl;
+				return -1;
+			}
+			const DWORD result = WaitForSingleObject(semaphore_plane_counter, INFINITE);  // Waits for the Control to have space for this plane
+			if (result != WAIT_OBJECT_0) {
+				tcout << _T("Error waiting for the semaphore -> ") << GetLastError() << endl;
+				return -1;
+			}
+		}
+
+		const HANDLE handle_mapped_file = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, MAPPED_MEMORY_IDENTIFIER);
+		if (handle_mapped_file == NULL) {
+			tcout << _T("Could not open file mapping object (") << GetLastError() << _T(").\n");
+			ReleaseSemaphore(semaphore_plane_counter, 1, nullptr);
 			return -1;
 		}
-		DWORD result = WaitForSingleObject(semaphore_plane_counter, INFINITE);  // Waits for the Control to have space for this plane
-		if (result != WAIT_OBJECT_0) {
-			tcout << _T("Error waiting for the semaphore -> ") << GetLastError() << endl;
+		void* shared_mem_pointer = MapViewOfFile(handle_mapped_file, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+		if (shared_mem_pointer == NULL) {
+			tcout << _T("Could not map view of file (") << GetLastError() << _T(").\n");
+			CloseHandle(handle_mapped_file);
+			ReleaseSemaphore(semaphore_plane_counter, 1, nullptr);
 			return -1;
 		}
+
+		auto shared_control = (SharedControl*)shared_mem_pointer;
+		auto planes = (Plane*)&shared_control[1];
+
+		Plane* this_plane = nullptr;
+
+		for (int i = 0; i < shared_control->max_plane_amount; ++i) {
+			if (!planes[i].in_use) {
+				this_plane = &planes[i];
+
+				this_plane->in_use = true;
+				this_plane->offset = i;
+				this_plane->heartbeat = true;
+				this_plane->velocity = velocity;
+				this_plane->max_passengers = capacity;
+				memcpy(this_plane->origin, starting_port.c_str(), sizeof(TCHAR) * (starting_port.size() + 1));
+
+				break;
+			}
+		}
+
+		if (this_plane == nullptr) {
+			tcout << _T("Critical Error. Should never happen. Plane did not find free spot\n");
+			UnmapViewOfFile(shared_mem_pointer);
+			CloseHandle(handle_mapped_file);
+			ReleaseSemaphore(semaphore_plane_counter, 1, nullptr);
+			return -1;
+		}
+
+		plane_main = new PlaneMain(shared_control, planes, this_plane, this_plane->offset, semaphore_plane_counter, handle_mapped_file);
 	}
 
-	while (true) {
+
+	plane_main->receiving_thread = create_thread(receive_updates, plane_main);
+
+	PlaneControlMessage message;
+	message.plane_offset = plane_main->this_plane->offset;
+	message.type = TYPE_NEW_PLANE;
+	memcpy(message.data.airport_name, starting_port.c_str(), sizeof(TCHAR) * (starting_port.size() + 1));
+	plane_main->control_buffer->set_next_element(message);
+
+
+	//TODO heartbeat
+
+
+
+
+
+	while (!plane_main->exit) {
 		tcout << _T("> ");
-		tstring input;
+		TSTRING input;
 		tcin >> input;
-		vector<tstring> input_parts = stringSplit(input, _T(" "));
+		vector<TSTRING> input_parts = stringSplit(input, _T(" "));
 		auto command = input_parts[0];
 
 		if (command == _T("destiny")) {
-			// put result[1] on menuset_destiny(result[1]);
-		}
-		else if (command == _T("board")) {
+			if (input_parts.size() == 2) {
+				TSTRING destiny = input_parts[1];
+				memcpy(plane_main->this_plane->destiny, destiny.c_str(), sizeof(TCHAR) * (destiny.size() + 1));
+			} else
+				tcout << _T("Invalid Syntax -> destiny <name>") << endl;
+		} else if (command == _T("board")) {
 
-		}
-		else if (command == _T("fly")) {
+		} else if (command == _T("fly")) {
 			// put result[1] on 
-		}
-		else if (command == _T("exit")) {
-			// put result[1] on 
-		}
-		else {
+		} else if (command == _T("exit")) {
+			plane_main->exit = true;
+			break;
+		} else {
 			tcout << _T("----- Comands available ----- \n destiny <name>\n board\n fly\n exit") << endl;
 		}
 	}
 
-
-
-	ReleaseSemaphore(semaphore_plane_counter, 1, NULL);
+	exit_everything(plane_main);
 
 	//TODO Interação / Comandos:
 	//	Definir o próximo destino(depois de iniciada a viagem este não pode ser alterado).

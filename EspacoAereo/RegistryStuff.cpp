@@ -7,7 +7,7 @@
 #ifdef UNICODE
 #define tcout std::wcout
 #define tcin std::wcin
-#define tstring std::wstring
+#define TSTRING std::wstring
 #define tstringstream std::wstringstream
 #else
 #define tcout std::cout

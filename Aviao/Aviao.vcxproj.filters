@@ -18,12 +18,27 @@
     <ClCompile Include="Aviao.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\EspacoAereo\Utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\EspacoAereo\CircularBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PlaneMain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\dlls\SO2_TP_DLL_2021.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\EspacoAereo\SharedConstants.h">
+    <ClInclude Include="..\EspacoAereo\Utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\EspacoAereo\SharedStructContents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PlaneMain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

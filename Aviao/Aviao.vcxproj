@@ -141,11 +141,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\EspacoAereo\CircularBuffer.cpp" />
+    <ClCompile Include="..\EspacoAereo\Utils.cpp" />
     <ClCompile Include="Aviao.cpp" />
+    <ClCompile Include="PlaneMain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\dlls\SO2_TP_DLL_2021.h" />
-    <ClInclude Include="..\EspacoAereo\SharedConstants.h" />
+    <ClInclude Include="..\EspacoAereo\SharedStructContents.h" />
+    <ClInclude Include="..\EspacoAereo\Utils.h" />
+    <ClInclude Include="PlaneMain.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -2,6 +2,7 @@
 #include <tchar.h>
 #include <fcntl.h>
 #include <io.h>
+#include <synchapi.h>
 #include <iostream>
 #include <string>
 #include "RegistryStuff.h"
@@ -10,21 +11,104 @@
 #include "CircularBuffer.h"
 #include "SharedStructContents.h"
 #include "TextInterface.h"
+#include "ControlStructs.h"
 
 using namespace std;
 
 #ifdef UNICODE
 #define tcout std::wcout
 #define tcin std::wcin
-#define tstring std::wstring
 #define tstringstream std::wstringstream
 #else
 #define tcout std::cout
 #define tcin std::cin
-#define tstring std::string
 #define tstringstream std::stringstream
 #endif
 
+
+bool exit_bool = false;
+
+DWORD WINAPI receive_updates(LPVOID param) {
+	ControlMain* control = (ControlMain*)param;
+
+	while (!control->exit) {
+		const PlaneControlMessage message = control->receiving_buffer->get_next_element();
+
+		switch (message.type) {
+		case TYPE_NEW_PLANE:
+		{
+			int offset = message.plane_offset;
+
+			tcout << _T("New Plane -> offset : ") << offset
+				<< _T(", airport : ") << message.data.airport_name
+				<< _T(", max capacity : ") << control->planes[offset].max_passengers
+				<< _T(", velocity : ") << control->planes[offset].velocity << endl;
+
+			break;
+		}
+		case TYPE_NEXT_DESTINY: // maybe there is no need for this
+			break;
+		case TYPE_START_TRIP:
+			break;
+		case TYPE_TO_BOARD:
+			break;
+		case TYPE_PLANE_LEAVES:
+			tcout << _T("He gone\n"); //TODO actually do the shits
+			break;
+		case TYPE_PLANE_CRASHES:
+			break;
+		case TYPE_FINISHED_TRIP:
+			break;
+		default:
+			tcout << _T("Invalid type received from plane :") << message.plane_offset << endl;
+		}
+	}
+	return 0;
+}
+
+BOOL WINAPI console_handler(DWORD dwType) {
+	switch (dwType) {
+	case CTRL_C_EVENT:
+		tcout << _T("Ctrl + C\n");
+		exit_bool = true;
+		//TODO make da ting go down when it should
+		break;
+	case CTRL_BREAK_EVENT:
+		tcout << _T("Ctrl + break\n");
+		break;
+	default:
+		tcout << _T("Non Defined Event\n");
+	}
+	return false;
+}
+
+void exit_everything(ControlMain* control_main) {
+
+	tcout << _T("Exiting\n-----------------------------");
+
+	for (int i = 0; i < control_main->shared_control->max_plane_amount; ++i) {
+		Plane* current_plane = &control_main->planes[i];
+		if (current_plane->in_use) {
+
+			TCHAR buf[8];
+			_stprintf_s(buf, 8, _T("%d"), i);
+			CircularBuffer buffer(&current_plane->buffer, buf);
+
+			PlaneControlMessage message;
+			message.type = TYPE_CONTROL_EXITING;
+			buffer.set_next_element(message);
+		}
+	}
+
+	CloseHandle(control_main->receiving_thread);
+	UnmapViewOfFile(control_main->shared_control);
+	CloseHandle(control_main->handle_mapped_file);
+
+	delete(control_main->receiving_buffer);
+	delete(control_main);
+
+	exit(0);
+}
 
 int _tmain(int argc, TCHAR** argv) {
 
@@ -34,10 +118,8 @@ int _tmain(int argc, TCHAR** argv) {
 	val = _setmode(_fileno(stderr), _O_WTEXT);
 #endif
 
-	HANDLE process_lock_mutex, planes_semaphore;
-
 	//Check if is already running --------------------------------------------
-	process_lock_mutex = CreateMutexW(0, FALSE, _T("Airport_Control"));
+	HANDLE process_lock_mutex = CreateMutexW(0, FALSE, _T("Airport_Control"));
 	// Tries to create a mutex with the specified name
 	// If the application is already running it cant create another mutex with the same name
 	if (GetLastError() == ERROR_ALREADY_EXISTS) {
@@ -49,55 +131,54 @@ int _tmain(int argc, TCHAR** argv) {
 
 	//Get max planes amount from registry ------------------------------------
 	int max_planes = get_max_planes_from_registry();
-	tcout << "Max planes from registry : " << max_planes << endl;
+	tcout << _T("Max planes from registry : ") << max_planes << endl;
 	//Create Semaphore that control max planes at a moment
-	planes_semaphore = CreateSemaphoreW(NULL, max_planes, max_planes, SEMAPHORE_NAME_MAX_PLANES);
-	if (planes_semaphore == NULL) {
+	HANDLE planes_semaphore = CreateSemaphoreW(nullptr, max_planes, max_planes, SEMAPHORE_MAX_PLANES);
+	if (planes_semaphore == nullptr) {
 		tcout << _T("Semaphore already exists -> ") << GetLastError() << endl;
 		return -1;
 	}
 	// -----------------------------------------------------------------------
 
+
+	if (!SetConsoleCtrlHandler(console_handler, true)) {
+		tcout << _T("Unable to set console handler!\n");
+		return -1;
+	}
+
 	// -----------------------------------------------------------------------
-	HANDLE timer = CreateWaitableTimer(NULL, TRUE, NULL); // TODO make the
+	HANDLE timer = CreateWaitableTimer(nullptr, TRUE, nullptr); // TODO make the checker for a dead plane
 	//WaitForSingleObject(timer, INFINITE);
 	// -----------------------------------------------------------------------
 
 
 
 	//Create Shared Memory ---------------------------------------------------
+	const DWORD shared_memory_size = sizeof(SharedControl) + sizeof(Plane) * max_planes; //Soma do espaço necessário a alocar
 
-	DWORD shared_memory_size = sizeof(SharedStructContents); //TODO add sizeof(estrutura com tudo o que é partilhado)
-	HANDLE handleMappedFile;
-	SharedStructContents* sharedMemPointer;
-
-	handleMappedFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, shared_memory_size, MAPPED_MEMORY_IDENTIFIER);
-
-	if (handleMappedFile == NULL) {
-		_tprintf(_T("Could not create file mapping object (%d).\n"), GetLastError());
-		return 1;
-	}
-	sharedMemPointer = (SharedStructContents*)MapViewOfFile(handleMappedFile
-		, FILE_MAP_ALL_ACCESS, 0, 0, shared_memory_size);
-
-	if (sharedMemPointer == NULL) {
-		_tprintf(_T("Could not map view of file (%d).\n"), GetLastError());
-		CloseHandle(handleMappedFile);
-		return 1;
+	HANDLE handle_mapped_file;
+	void* shared_mem_pointer = allocate_shared_memory(handle_mapped_file, shared_memory_size);
+	if (shared_mem_pointer == NULL) {
+		return -1;
 	}
 
+
+	ControlMain* control_main = nullptr;
 	{
-		SharedStructContents bigStruct;
-		bigStruct.planes[0].id = 10;
+		SharedControl* shared_control = (SharedControl*)shared_mem_pointer;
+		Plane* planes_start = (Plane*)&shared_control[1];
 
-		*sharedMemPointer = bigStruct;
+
+		shared_control->max_plane_amount = max_planes;
+		control_main = new ControlMain(shared_control, planes_start, handle_mapped_file);
 	}
 
+	control_main->receiving_thread = create_thread(receive_updates, control_main);
 
-	start_interface();
 
-	UnmapViewOfFile(sharedMemPointer);
-	CloseHandle(handleMappedFile);
+	enter_text_interface(control_main, &exit_bool);
+
+	exit_everything(control_main);
 
 
 	//TODO Permite a criação de aeroportos, mediante indicação pela interface com o utilizador do nome do aeroporto e das suas coordenadas

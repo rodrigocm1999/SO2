@@ -1,18 +1,11 @@
 #pragma once
-#include<Windows.h>
+#include <Windows.h>
+#include <string>
+#include "SharedStructContents.h"
 
-template <typename T>
-struct CircBuffer {
-	T* buffer;
-	unsigned int buffer_size;
-	unsigned int in;
-	unsigned int out;
-};
-
-template <typename T>
 class CircularBuffer {
 
-	struct CircBuffer<T>* data;
+	CircBuffer* data;
 
 	HANDLE mutex_get;
 	HANDLE mutex_set;
@@ -21,11 +14,10 @@ class CircularBuffer {
 
 public:
 
-	CircularBuffer(struct CircBuffer<T>* data);
+	CircularBuffer(CircBuffer* data, const TCHAR* mutex_prefix);
 	~CircularBuffer();
 
-	T get_next_element();
-	void set_next_element(T& element);
+	PlaneControlMessage get_next_element();
+	void set_next_element(PlaneControlMessage& element);
 
 };
-

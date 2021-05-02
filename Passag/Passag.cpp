@@ -10,7 +10,7 @@ using namespace std;
 #ifdef UNICODE
 #define tcout wcout
 #define tcin wcin
-#define tstring wstring
+#define TSTRING wstring
 #define tstringstream wstringstream
 #else
 #define tcout cout
