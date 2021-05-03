@@ -19,4 +19,6 @@ public:
 	HANDLE receiving_thread;
 
 	PlaneMain(SharedControl* shared_control, Plane* planes, Plane* this_plane, int offset,HANDLE semaphore_plane_counter, HANDLE handle_mapped_file);
+
+	~PlaneMain();
 };

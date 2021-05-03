@@ -1,5 +1,4 @@
 #pragma once
-#include "Position.h"
 #include "SharedStructContents.h"
 #include <string>
 #include <vector>

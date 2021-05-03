@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include "SO2_TP_DLL_2021.h"
 #include "SharedStructContents.h"
 #include "Utils.h"
 #include "CircularBuffer.h"
@@ -35,12 +36,17 @@ DWORD WINAPI receive_updates(LPVOID param) {
 		case TYPE_START_TRIP:
 			break;
 		case TYPE_CONTROL_EXITING:
-			tcout << _T("Control Exiting");
+			tcout << _T("Control Exiting\n");
+			plane_main->exit = true;
+			exit_everything(plane_main);
+			break;
+		case TYPE_PLANE_NOT_ALLOWED:
+			tcout << _T("Plane not allowed\n");
 			plane_main->exit = true;
 			exit_everything(plane_main);
 			break;
 		default:
-			tcout << _T("Invalid type received from plane :") << message.plane_offset << endl;
+			tcout << _T("Invalid type received from control :") << message.type << endl;
 		}
 	}
 }
@@ -66,8 +72,6 @@ void exit_everything(PlaneMain* plane_main) {
 	CloseHandle(plane_main->receiving_thread);
 	ReleaseSemaphore(plane_main->semaphore_plane_counter, 1, nullptr);
 
-	delete(plane_main->receiving_buffer);
-	delete(plane_main->control_buffer);
 	delete(plane_main);
 
 	exit(0);
@@ -161,26 +165,31 @@ int _tmain(int argc, TCHAR** argv) {
 
 	//TODO heartbeat
 
-
-
-
-
 	while (!plane_main->exit) {
 		tcout << _T("> ");
 		TSTRING input;
-		tcin >> input;
+		getline(tcin, input);
 		vector<TSTRING> input_parts = stringSplit(input, _T(" "));
 		auto command = input_parts[0];
 
 		if (command == _T("destiny")) {
 			if (input_parts.size() == 2) {
 				TSTRING destiny = input_parts[1];
-				memcpy(plane_main->this_plane->destiny, destiny.c_str(), sizeof(TCHAR) * (destiny.size() + 1));
+				int destiny_size = sizeof(TCHAR) * (destiny.size() + 1);
+				memcpy(plane_main->this_plane->destiny, destiny.c_str(), destiny_size);
+
+				message.plane_offset = plane_main->this_plane->offset;
+				message.type = TYPE_NEXT_DESTINY;
+				memcpy(message.data.airport_name, plane_main->this_plane->destiny, destiny_size);
+				plane_main->control_buffer->set_next_element(message);
+
 			} else
 				tcout << _T("Invalid Syntax -> destiny <name>") << endl;
 		} else if (command == _T("board")) {
 
 		} else if (command == _T("fly")) {
+
+			//int amen = move(plain_main->this_plane->position.x, 2, 3, 4, int* asd, int* asd2);
 			// put result[1] on 
 		} else if (command == _T("exit")) {
 			plane_main->exit = true;

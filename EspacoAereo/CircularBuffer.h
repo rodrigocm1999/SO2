@@ -14,7 +14,7 @@ class CircularBuffer {
 
 public:
 
-	CircularBuffer(CircBuffer* data, const TCHAR* mutex_prefix);
+	CircularBuffer(CircBuffer* data, int mutex_number);
 	~CircularBuffer();
 
 	PlaneControlMessage get_next_element();

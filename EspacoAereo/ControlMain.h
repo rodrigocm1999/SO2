@@ -4,8 +4,12 @@
 #include "CircularBuffer.h"
 #include "Airport.h"
 
+#define TSTRING std::basic_string<TCHAR>
+
 class ControlMain {
 
+	CircularBuffer** buffer_planes;
+	
 public:
 
 	bool exit = false;
@@ -23,7 +27,11 @@ public:
 
 	
 	ControlMain(SharedControl* shared_control, Plane* planes,HANDLE handle_mapped_file);
-
+	~ControlMain();
+	
 	bool add_airport(Airport* airport);
+	Airport* get_airport(TSTRING name);
+
+	CircularBuffer* get_plane_buffer(int offset);
 
 };

@@ -8,7 +8,7 @@
 #include <vector>
 #include <string>
 #include "Utils.h"
-#include "ControlStructs.h"
+#include "ControlMain.h"
 
 using namespace std;
 
@@ -29,7 +29,7 @@ void enter_text_interface(ControlMain* control_main, bool* exit) {
 	while (!*exit) {
 		tcout << _T("Menu -------------\n");
 		TSTRING input;
-		tcin >> input;
+		getline(tcin, input);
 		vector<TSTRING> input_parts = stringSplit(input, _T(" "));
 		auto command = input_parts[0];
 
@@ -67,7 +67,7 @@ void enter_text_interface(ControlMain* control_main, bool* exit) {
 			*exit = true;
 			control_main->exit = true;
 		} else {
-			tcout << _T("Invalid Syntax -> new_airport|accept|list\n");
+			tcout << _T("Invalid Syntax -> new_airport|accept|list\n Introduced -> ") << input << endl;
 		}
 	}
 }

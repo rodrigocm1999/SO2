@@ -17,7 +17,6 @@ vector<TSTRING> stringSplit(const TSTRING& ori_str, const TSTRING delimiter) {
 	return list;
 }
 
-
 void* allocate_shared_memory(HANDLE& mapped_file, DWORD size) {
 	mapped_file = CreateFileMapping(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0, size, MAPPED_MEMORY_IDENTIFIER);
 
@@ -38,4 +37,8 @@ void* allocate_shared_memory(HANDLE& mapped_file, DWORD size) {
 
 HANDLE create_thread(const LPTHREAD_START_ROUTINE function_to_run, const LPVOID argument) {
 	return CreateThread(nullptr, 0, function_to_run, argument, 0, nullptr);
+}
+
+int grid_distance(const Position& o1, const Position& o2) {
+	return  abs(o1.x - o2.x) + abs(o1.y - o2.y);
 }

@@ -11,7 +11,8 @@
 #include "CircularBuffer.h"
 #include "SharedStructContents.h"
 #include "TextInterface.h"
-#include "ControlStructs.h"
+#include "ControlMain.h"
+#include "ControlFunctions.h"
 
 using namespace std;
 
@@ -27,44 +28,6 @@ using namespace std;
 
 
 bool exit_bool = false;
-
-DWORD WINAPI receive_updates(LPVOID param) {
-	ControlMain* control = (ControlMain*)param;
-
-	while (!control->exit) {
-		const PlaneControlMessage message = control->receiving_buffer->get_next_element();
-
-		switch (message.type) {
-		case TYPE_NEW_PLANE:
-		{
-			int offset = message.plane_offset;
-
-			tcout << _T("New Plane -> offset : ") << offset
-				<< _T(", airport : ") << message.data.airport_name
-				<< _T(", max capacity : ") << control->planes[offset].max_passengers
-				<< _T(", velocity : ") << control->planes[offset].velocity << endl;
-
-			break;
-		}
-		case TYPE_NEXT_DESTINY: // maybe there is no need for this
-			break;
-		case TYPE_START_TRIP:
-			break;
-		case TYPE_TO_BOARD:
-			break;
-		case TYPE_PLANE_LEAVES:
-			tcout << _T("He gone\n"); //TODO actually do the shits
-			break;
-		case TYPE_PLANE_CRASHES:
-			break;
-		case TYPE_FINISHED_TRIP:
-			break;
-		default:
-			tcout << _T("Invalid type received from plane :") << message.plane_offset << endl;
-		}
-	}
-	return 0;
-}
 
 BOOL WINAPI console_handler(DWORD dwType) {
 	switch (dwType) {
@@ -82,33 +45,7 @@ BOOL WINAPI console_handler(DWORD dwType) {
 	return false;
 }
 
-void exit_everything(ControlMain* control_main) {
 
-	tcout << _T("Exiting\n-----------------------------");
-
-	for (int i = 0; i < control_main->shared_control->max_plane_amount; ++i) {
-		Plane* current_plane = &control_main->planes[i];
-		if (current_plane->in_use) {
-
-			TCHAR buf[8];
-			_stprintf_s(buf, 8, _T("%d"), i);
-			CircularBuffer buffer(&current_plane->buffer, buf);
-
-			PlaneControlMessage message;
-			message.type = TYPE_CONTROL_EXITING;
-			buffer.set_next_element(message);
-		}
-	}
-
-	CloseHandle(control_main->receiving_thread);
-	UnmapViewOfFile(control_main->shared_control);
-	CloseHandle(control_main->handle_mapped_file);
-
-	delete(control_main->receiving_buffer);
-	delete(control_main);
-
-	exit(0);
-}
 
 int _tmain(int argc, TCHAR** argv) {
 

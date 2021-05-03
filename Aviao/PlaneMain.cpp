@@ -8,6 +8,11 @@ PlaneMain::PlaneMain(SharedControl* shared_control, Plane* planes, Plane* this_p
 	TCHAR buf[8];
 	_stprintf_s(buf, 8, _T("%d"), offset);
 
-	receiving_buffer = new CircularBuffer(&planes[offset].buffer, buf);
+	receiving_buffer = new CircularBuffer(&planes[offset].buffer, offset);
 	control_buffer = new CircularBuffer(&shared_control->circular_buffer, CONTROL_MUTEX_PREFIX);
+}
+
+PlaneMain::~PlaneMain() {
+	delete(this->receiving_buffer);
+	delete(this->control_buffer);
 }
