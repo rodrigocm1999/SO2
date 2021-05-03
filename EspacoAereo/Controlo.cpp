@@ -8,7 +8,6 @@
 #include "RegistryStuff.h"
 #include "Controlo.h"
 #include "Utils.h"
-#include "CircularBuffer.h"
 #include "SharedStructContents.h"
 #include "TextInterface.h"
 #include "ControlMain.h"
@@ -18,12 +17,8 @@ using namespace std;
 
 #ifdef UNICODE
 #define tcout std::wcout
-#define tcin std::wcin
-#define tstringstream std::wstringstream
 #else
 #define tcout std::cout
-#define tcin std::cin
-#define tstringstream std::stringstream
 #endif
 
 
@@ -129,9 +124,6 @@ int _tmain(int argc, TCHAR** argv) {
 
 	//TODO Interface com utilizador: interface gráfica Win32 que apresenta todo o espaço aéreo e os seus elementos. Os 
 	//	aeroportos e os aviões são representados graficamente de forma distinta.Esta informação estará permanentemente visível e sempre atualizada
-
-	//TODO Interface com utilizador: interface gráfica Win32 que apresenta todo o espaço aéreo e os seus elementos. Os 
-	//	aeroportos e os aviões são representados graficamente de forma distinta.Esta informação estará permanentemente visível e sempre atualizada
 	//		
 	//		TODO Numa versão inicial (Meta 1) será aceite uma versão simplificada da interface segundo o 
 	//			paradigma consola.Não é para desenhar uma matriz, mas sim para apresentar mensagens de texto tais como “avião ID na posição x, y”.
@@ -141,7 +133,6 @@ int _tmain(int argc, TCHAR** argv) {
 
 	//TODO Comandos:
 	//	Encerrar todo o sistema (todas as aplicações são notificadas).
-	//	Criar novos aeroportos.
 	//	Suspender / ativar a aceitação de novos aviões por parte dos utilizadores.
 	//	Listar todos os aeroportos, aviões e passageiros existentes no sistema(com os detalhes de cada um, por	exemplo, destino, no caso dos passageiros).
 }

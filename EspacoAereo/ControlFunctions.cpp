@@ -6,12 +6,8 @@
 
 #ifdef UNICODE
 #define tcout std::wcout
-#define tcin std::wcin
-#define tstringstream std::wstringstream
 #else
 #define tcout std::cout
-#define tcin std::cin
-#define tstringstream std::stringstream
 #endif
 
 using namespace std;

@@ -4,7 +4,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "SO2_TP_DLL_2021.h"
 #include "SharedStructContents.h"
 #include "Utils.h"
 #include "CircularBuffer.h"

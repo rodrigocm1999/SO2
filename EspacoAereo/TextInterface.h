@@ -2,8 +2,6 @@
 
 #include <windows.h>
 #include <tchar.h>
-#include <fcntl.h>
-#include <io.h>
 #include <iostream>
 #include <vector>
 #include <string>
@@ -17,11 +15,9 @@ using namespace std;
 #ifdef UNICODE
 #define tcout wcout
 #define tcin wcin
-#define tstringstream wstringstream
 #else
 #define tcout cout
 #define tcin cin
-#define tstringstream stringstream
 #endif
 
 
