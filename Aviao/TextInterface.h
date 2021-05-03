@@ -60,42 +60,45 @@ void enter_text_interface_plane(PlaneMain* plane_main) {
 				int result = 0;
 				DWORD sleep_time = 1000 / plane->velocity;
 
-				for (int i = 0; i < plane->velocity; ++i) {
+				while (true) {
 
-					Sleep(sleep_time);
+					for (int i = 0; i < plane->velocity; ++i) {
 
-					Position position;
+						Sleep(sleep_time);
 
-					result = move(plane->position.x, plane->position.y,
-						plane_main->destiny_position.x, plane_main->destiny_position.y,
-						&position.x, &position.y);
+						Position position;
+
+						result = move(plane->position.x, plane->position.y,
+							plane_main->destiny_position.x, plane_main->destiny_position.y,
+							&position.x, &position.y);
 
 
+						if (result == PLANE_MOVED) {
+							plane->position = position;
 
-					if (result == PLANE_MOVED) {
-						plane->position = position;
+						} else if (result == PLANE_ARRIVED) {
+							plane->position = position;
+							break;
+						} else {
+							tcout << _T("What the heck happened. Error when flying. move() returned error\n");
+							break;
+						}
 
-					} else if (result == PLANE_ARRIVED) {
-						plane->position = position;
-						break;
-					} else {
-						tcout << _T("What the heck happened. Error when flying. move() returned error\n");
-						break;
 					}
 
+					PlaneControlMessage message;
+					message.plane_offset = plane_main->this_plane->offset;
+
+					if (result == PLANE_MOVED) {
+						message.type = TYPE_PLANE_MOVED;
+						message.data.position = plane->position;
+						plane_main->control_buffer->set_next_element(message);
+					} else if (result == PLANE_ARRIVED) {
+						message.type = TYPE_FINISHED_TRIP;
+						plane_main->control_buffer->set_next_element(message);
+						break;
+					}
 				}
-
-				PlaneControlMessage message;
-				message.plane_offset = plane_main->this_plane->offset;
-
-				if (result == PLANE_MOVED) {
-					message.type = TYPE_PLANE_MOVED;
-					message.data.position = plane->position;
-				} else if (result == PLANE_ARRIVED) {
-					message.type = TYPE_FINISHED_TRIP;
-				}
-
-				plane_main->control_buffer->set_next_element(message);
 			} else {
 				tcout << _T("No defined destiny\n");
 			}

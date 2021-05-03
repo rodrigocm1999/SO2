@@ -29,12 +29,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\EspacoAereo\Utils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\EspacoAereo\SharedStructContents.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="PlaneMain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -42,6 +36,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SO2_TP_DLL_2021.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\EspacoAereo\CircularBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\EspacoAereo\SharedStructContents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\EspacoAereo\Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

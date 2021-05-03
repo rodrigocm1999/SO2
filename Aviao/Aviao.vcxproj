@@ -89,10 +89,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\Tudo\School\SO2\Trabalho\EspacoAereo\EspacoAereo;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>SO2_TP_DLL_2021.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -148,6 +150,7 @@
     <ClCompile Include="PlaneMain.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\EspacoAereo\CircularBuffer.h" />
     <ClInclude Include="..\EspacoAereo\SharedStructContents.h" />
     <ClInclude Include="..\EspacoAereo\Utils.h" />
     <ClInclude Include="PlaneMain.h" />
