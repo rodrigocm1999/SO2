@@ -164,6 +164,9 @@ int _tmain(int argc, TCHAR** argv) {
 
 
 	//TODO heartbeat
+	int dsa = 2;
+	int* asd = &dsa;
+	//move(1, 2, 3, 4, asd, asd); // TODO fix this
 
 	while (!plane_main->exit) {
 		tcout << _T("> ");

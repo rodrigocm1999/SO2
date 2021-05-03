@@ -14,7 +14,7 @@
 
 CircularBuffer::CircularBuffer(CircBuffer* data, int mutex_number) {
 
-	tstringstream stream();
+	tstringstream stream;
 	stream << mutex_number;
 	TSTRING prefix = stream.str();
 	
