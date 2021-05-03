@@ -30,7 +30,7 @@ void exit_everything(PlaneMain* plane_main);
 DWORD WINAPI receive_updates(LPVOID param) {
 	PlaneMain* plane_main = (PlaneMain*)param;
 
-	while (1) {
+	while (true) {
 		const PlaneControlMessage message = plane_main->receiving_buffer->get_next_element();
 
 		switch (message.type) {
@@ -46,7 +46,17 @@ DWORD WINAPI receive_updates(LPVOID param) {
 			plane_main->exit = true;
 			exit_everything(plane_main);
 			break;
-		default:
+		case TYPE_PLANE_OK_DESTINY: {
+			plane_main->destiny_position = message.data.position;
+			plane_main->flight_ready = true;
+			tcout << _T("You are now allowed to fly to your destiny\n");
+			break;
+		}
+		case TYPE_PLANE_BAD_DESTINY: {
+			plane_main->flight_ready = false;
+			tcout << _T("Invalid destiny\n");
+			break;
+		}default:
 			tcout << _T("Invalid type received from control :") << message.type << endl;
 		}
 	}
@@ -92,6 +102,15 @@ int _tmain(int argc, TCHAR** argv) {
 	int capacity = _ttoi(argv[1]);
 	int velocity = _ttoi(argv[2]);
 	TSTRING starting_port = argv[3];
+
+	if (capacity <= 0) {
+		tcout << _T("Invalid capacity (capacity > 0)\n");
+		return -1;
+	}
+	if (velocity <= 0 || velocity >= 1000) {
+		tcout << _T("Invalid velocity (0 < velocity < 1000)\n");
+		return -1;
+	}
 
 	PlaneMain* plane_main = nullptr;
 	{

@@ -117,12 +117,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Tudo\School\SO2\Trabalho\EspacoAereo\dlls;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>C:\Tudo\School\SO2\Trabalho\EspacoAereo\dlls\SO2_TP_DLL_2021.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SO2_TP_DLL_2021.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -148,14 +148,11 @@
     <ClCompile Include="PlaneMain.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\dlls\SO2_TP_DLL_2021.h" />
     <ClInclude Include="..\EspacoAereo\SharedStructContents.h" />
     <ClInclude Include="..\EspacoAereo\Utils.h" />
     <ClInclude Include="PlaneMain.h" />
+    <ClInclude Include="SO2_TP_DLL_2021.h" />
     <ClInclude Include="TextInterface.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="..\dlls\SO2_TP_DLL_2021.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

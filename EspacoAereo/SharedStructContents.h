@@ -58,8 +58,8 @@ typedef struct {
 
 
 typedef struct {
-	unsigned int in;
-	unsigned int out;
+	unsigned char in;
+	unsigned char out;
 	PlaneControlMessage buffer[CIRC_BUFFER_SIZE];
 }CircBuffer;
 
@@ -74,7 +74,7 @@ typedef struct {
 	unsigned char offset;
 	int max_passengers;
 	unsigned char velocity;
-	
+
 	bool is_flying;
 	Position position;
 
