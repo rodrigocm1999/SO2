@@ -4,9 +4,6 @@
 #define SEMAPHORE_MAX_PLANES _T("Airport_max_planes")
 #define MAPPED_MEMORY_IDENTIFIER _T("Airport_shared_memory")
 
-#define BUFFER_SIZE 40
-
-
 #define TYPE_NEW_PLANE 1
 #define TYPE_PLANE_NOT_ALLOWED 2
 
@@ -19,6 +16,7 @@
 #define TYPE_TO_BOARD 20
 #define TYPE_START_TRIP 21
 #define TYPE_FINISHED_TRIP 22
+#define TYPE_PLANE_MOVED 23
 
 #define TYPE_PLANE_LEAVES 30
 #define TYPE_PLANE_CRASHES 31
@@ -36,10 +34,10 @@
 
 #define MAP_SIZE 1000
 
-#define MAP_EMPTY 0
-#define MAP_AIRPORT 1
-#define MAP_PLANE 2
+#define MAP_EMPTY 255
+#define MAP_AIRPORT 254
 
+#define BUFFER_SIZE 30
 #define CIRC_BUFFER_SIZE 5
 
 typedef struct {
@@ -53,7 +51,7 @@ typedef union { // check if needs more stuff to send
 }Data;
 
 typedef struct {
-	int plane_offset;
+	unsigned char plane_offset;
 	int type;
 	Data data;
 }PlaneControlMessage;
@@ -67,17 +65,17 @@ typedef struct {
 
 typedef struct {
 	CircBuffer circular_buffer;
-	char map[MAP_SIZE][MAP_SIZE];
+	unsigned char map[MAP_SIZE][MAP_SIZE];
 
-	int max_plane_amount;
+	unsigned char max_plane_amount;
 }SharedControl;
 
 typedef struct {
-	int offset;
+	unsigned char offset;
 	int max_passengers;
-	int velocity;
+	unsigned char velocity;
+	
 	bool is_flying;
-
 	Position position;
 
 	bool in_use;

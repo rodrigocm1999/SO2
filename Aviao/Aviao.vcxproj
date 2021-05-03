@@ -152,6 +152,7 @@
     <ClInclude Include="..\EspacoAereo\SharedStructContents.h" />
     <ClInclude Include="..\EspacoAereo\Utils.h" />
     <ClInclude Include="PlaneMain.h" />
+    <ClInclude Include="TextInterface.h" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\dlls\SO2_TP_DLL_2021.lib" />

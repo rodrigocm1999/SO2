@@ -26,6 +26,7 @@ bool ControlMain::add_airport(Airport* new_one) {
 			return false;
 
 	this->airports.push_back(new_one);
+	this->shared_control->map[new_one->position.x][new_one->position.y] = MAP_AIRPORT;
 	return true;
 }
 

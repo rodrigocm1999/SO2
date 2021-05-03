@@ -9,6 +9,7 @@
 #include "Utils.h"
 #include "CircularBuffer.h"
 #include "PlaneMain.h"
+#include "TextInterface.h"
 
 using namespace std;
 
@@ -41,7 +42,7 @@ DWORD WINAPI receive_updates(LPVOID param) {
 			exit_everything(plane_main);
 			break;
 		case TYPE_PLANE_NOT_ALLOWED:
-			tcout << _T("Plane not allowed\n");
+			tcout << _T("Indicated airport doesn't exist\n");
 			plane_main->exit = true;
 			exit_everything(plane_main);
 			break;
@@ -58,7 +59,6 @@ DWORD WINAPI heartbeat(LPVOID param) {
 }
 
 void exit_everything(PlaneMain* plane_main) {
-
 	tcout << _T("Exiting\n-----------------------------");
 
 	plane_main->this_plane->in_use = false;
@@ -101,9 +101,13 @@ int _tmain(int argc, TCHAR** argv) {
 				tcout << _T("Error opening semaphore -> ") << GetLastError() << endl;
 				return -1;
 			}
-			const DWORD result = WaitForSingleObject(semaphore_plane_counter, INFINITE);  // Waits for the Control to have space for this plane
+			const DWORD result = WaitForSingleObject(semaphore_plane_counter, 2000);
+			if (result == WAIT_TIMEOUT) {
+				tcout << _T("The control is full and doesnt allow more planes\n");
+				return -1;
+			}
 			if (result != WAIT_OBJECT_0) {
-				tcout << _T("Error waiting for the semaphore -> ") << GetLastError() << endl;
+				tcout << _T("Semaphore wait error : ") << GetLastError() << endl;
 				return -1;
 			}
 		}
@@ -168,39 +172,7 @@ int _tmain(int argc, TCHAR** argv) {
 	int* asd = &dsa;
 	//move(1, 2, 3, 4, asd, asd); // TODO fix this
 
-	while (!plane_main->exit) {
-		tcout << _T("> ");
-		TSTRING input;
-		getline(tcin, input);
-		vector<TSTRING> input_parts = stringSplit(input, _T(" "));
-		auto command = input_parts[0];
-
-		if (command == _T("destiny")) {
-			if (input_parts.size() == 2) {
-				TSTRING destiny = input_parts[1];
-				int destiny_size = sizeof(TCHAR) * (destiny.size() + 1);
-				memcpy(plane_main->this_plane->destiny, destiny.c_str(), destiny_size);
-
-				message.plane_offset = plane_main->this_plane->offset;
-				message.type = TYPE_NEXT_DESTINY;
-				memcpy(message.data.airport_name, plane_main->this_plane->destiny, destiny_size);
-				plane_main->control_buffer->set_next_element(message);
-
-			} else
-				tcout << _T("Invalid Syntax -> destiny <name>") << endl;
-		} else if (command == _T("board")) {
-
-		} else if (command == _T("fly")) {
-
-			//int amen = move(plain_main->this_plane->position.x, 2, 3, 4, int* asd, int* asd2);
-			// put result[1] on 
-		} else if (command == _T("exit")) {
-			plane_main->exit = true;
-			break;
-		} else {
-			tcout << _T("----- Comands available ----- \n destiny <name>\n board\n fly\n exit") << endl;
-		}
-	}
+	enter_text_interface_plane(plane_main);
 
 	exit_everything(plane_main);
 

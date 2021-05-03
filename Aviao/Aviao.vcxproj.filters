@@ -41,6 +41,9 @@
     <ClInclude Include="PlaneMain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TextInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\dlls\SO2_TP_DLL_2021.lib" />

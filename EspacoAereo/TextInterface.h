@@ -39,8 +39,12 @@ void enter_text_interface(ControlMain* control_main, bool* exit) {
 				int pos_x = _ttoi(input_parts[2].c_str());
 				int pos_y = _ttoi(input_parts[3].c_str());
 
-				auto airport = new Airport(name, pos_x, pos_y);
-				control_main->add_airport(airport);
+				if (pos_x < 0 || pos_x >= MAP_SIZE || pos_y < 0 || pos_y >= MAP_SIZE) {
+					tcout << _T("Invalid position entered\n");
+				} else {
+					auto airport = new Airport(name, pos_x, pos_y);
+					control_main->add_airport(airport);
+				}
 			} else {
 				tcout << _T("Invalid Syntax -> new_airport <name> <posX> <posY>\n");
 			}

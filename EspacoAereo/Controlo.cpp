@@ -108,6 +108,8 @@ int _tmain(int argc, TCHAR** argv) {
 
 		shared_control->max_plane_amount = max_planes;
 		control_main = new ControlMain(shared_control, planes_start, handle_mapped_file);
+
+		memset(control_main->shared_control->map, MAP_EMPTY, sizeof(control_main->shared_control->map));
 	}
 
 	control_main->receiving_thread = create_thread(receive_updates, control_main);
