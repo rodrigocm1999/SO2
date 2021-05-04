@@ -14,9 +14,10 @@
 #define TYPE_PLANE_BAD_DESTINY 12
 
 #define TYPE_TO_BOARD 20
-#define TYPE_START_TRIP 21
-#define TYPE_FINISHED_TRIP 22
-#define TYPE_PLANE_MOVED 23
+#define TYPE_PLANE_FINISHED_BOARDING 21
+#define TYPE_START_TRIP 23
+#define TYPE_FINISHED_TRIP 24
+#define TYPE_PLANE_MOVED 25
 
 #define TYPE_PLANE_LEAVES 30
 #define TYPE_PLANE_CRASHES 31
@@ -40,10 +41,11 @@
 #define BUFFER_SIZE 30
 #define CIRC_BUFFER_SIZE 5
 
-#define NOT_DEFINED_AIRPORT -1
+#define NOT_DEFINED_AIRPORT (-1)
 
-typedef struct {
-	int x; int y;
+typedef struct position {
+	int x;
+	int y;
 }Position;
 
 
@@ -52,7 +54,7 @@ typedef union { // check if needs more stuff to send
 	Position position;
 }Data;
 
-typedef struct {
+typedef struct PlaneControlMessage {
 	unsigned char plane_offset;
 	int type;
 	Data data;
@@ -77,9 +79,10 @@ typedef struct {
 	int max_passengers;
 	unsigned char velocity;
 
+	bool flight_ready;
 	bool is_flying;
 	Position position;
-	
+
 	bool in_use;
 	bool heartbeat;
 

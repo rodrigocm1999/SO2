@@ -35,14 +35,14 @@ DWORD WINAPI receive_updates(LPVOID param) {
 			if (airport != nullptr) {
 				plane->position = airport->position;
 				plane->origin_airport_id = airport->id;
-				airport->planes.push_back(plane);
+				airport->add_plane(plane);
 			} else {
-				// buffer mutexes get closed at the end of the scope
-				// but it doesn't matter because this planes is leaving
+				// buffer mutexes get created/opened and closed in this scope
+				// but it doesn't matter because this plane is leaving
 				CircularBuffer buffer(&plane->buffer, plane_offset);
 				message.type = TYPE_PLANE_NOT_ALLOWED;
 				buffer.set_next_element(message);
-				
+
 				plane->in_use = false;
 			}
 			break;
@@ -79,20 +79,35 @@ DWORD WINAPI receive_updates(LPVOID param) {
 			break;
 		}
 		case TYPE_TO_BOARD: {
-			tcout << _T("Plane offset -> ") << plane->offset << _T(", left") << endl;
+			tcout << _T("Plane offset -> ") << plane->offset << _T(", boarding") << endl;
+			plane->flight_ready = false;
+			//TODO actually move the people
+			plane->flight_ready = true;
+			message.type = TYPE_PLANE_FINISHED_BOARDING;
+			CircularBuffer* buffer = control->get_plane_buffer(plane_offset);
 			break;
 		}
 		case TYPE_PLANE_LEAVES: {
 			tcout << _T("Plane offset -> ") << plane->offset << _T(", left") << endl;
+			control->plane_left_airport(plane_offset);
 			break;
 		}
 		case TYPE_PLANE_CRASHES: {
 			tcout << _T("Plane offset -> ") << plane->offset << _T(", crashed") << endl;
+			//TODO tell the people to shutdown
 			break;
 		}case TYPE_FINISHED_TRIP: {
 			tcout << _T("Plane offset -> ") << plane->offset
 				<< _T(", arrived at : ") << control->get_airport(plane->destiny_airport_id)->name
 				<< _T(", from : ") << control->get_airport(plane->origin_airport_id)->name << endl;
+
+			Airport* airport = control->get_airport(plane->destiny_airport_id);
+			airport->add_plane(plane);
+
+			plane->origin_airport_id = plane->destiny_airport_id;
+			plane->destiny_airport_id = NOT_DEFINED_AIRPORT;
+
+			//TODO tell the people to shtudown
 			break;
 		}default:
 			tcout << _T("Invalid type received from planes : ") << message.plane_offset << endl;

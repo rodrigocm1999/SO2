@@ -37,9 +37,9 @@ void enter_text_interface(ControlMain* control_main, bool* exit) {
 				if (pos_x < 0 || pos_x >= MAP_SIZE || pos_y < 0 || pos_y >= MAP_SIZE) {
 					tcout << _T("Invalid position entered\n");
 				} else {
-					if(control_main->add_airport(name, pos_x, pos_y)){
+					if (control_main->add_airport(name, pos_x, pos_y)) {
 						tcout << _T("Added airport") << endl;
-					}else{
+					} else {
 						tcout << _T("Airport with the same name or in the same position already exists") << endl;
 					}
 				}
@@ -65,7 +65,7 @@ void enter_text_interface(ControlMain* control_main, bool* exit) {
 						}
 					}
 				} else if (type == _T("planes")) {
-					
+
 				} else if (type == _T("passengers")) {
 
 				}

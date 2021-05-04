@@ -45,12 +45,12 @@ DWORD WINAPI receive_updates(LPVOID param) {
 			break;
 		case TYPE_PLANE_OK_DESTINY: {
 			plane_main->destiny_position = message.data.position;
-			plane_main->flight_ready = true;
+			plane_main->this_plane->flight_ready = true;
 			tcout << _T("You are now allowed to fly to your destiny\n");
 			break;
 		}
 		case TYPE_PLANE_BAD_DESTINY: {
-			plane_main->flight_ready = false;
+			plane_main->this_plane->flight_ready = false;
 			plane_main->this_plane->destiny_airport_id = NOT_DEFINED_AIRPORT;
 			tcout << _T("Invalid destiny\n");
 			break;
@@ -185,18 +185,14 @@ int _tmain(int argc, TCHAR** argv) {
 
 
 	//TODO heartbeat
-	int dsa = 2;
-	int* asd = &dsa;
-	//move(1, 2, 3, 4, asd, asd); // TODO fix this
 
 	enter_text_interface_plane(plane_main);
 
 	exit_everything(plane_main);
 
 	//TODO Interação / Comandos:
-	//	Definir o próximo destino(depois de iniciada a viagem este não pode ser alterado).
+	//	Definir o próximo destino(depois de iniciada a viagem este não pode ser alterado). falta conseguir escrever exit e sair
 	//	Embarcar passageiros(todos os que estiverem nesse aeroporto para esse destino) e que caibam no avião.
-	//	Iniciar viagem(pode iniciar viagem sem embarcar ninguém).
 	//	Quando em viagem, o piloto não pode fazer nada a não ser terminar o programa.
 	//	O piloto pode terminar o programa a qualquer altura
 	//		Se o fizer a meio do voo, considera-se que houve um acidente e os passageiros perdem-se.

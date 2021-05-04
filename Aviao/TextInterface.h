@@ -47,7 +47,7 @@ void enter_text_interface_plane(PlaneMain* plane_main) {
 		if (command == _T("destiny")) {
 			if (input_parts.size() == 2) {
 				TSTRING destiny = input_parts[1];
-				int destiny_bytes = sizeof(TCHAR) * (destiny.size() + 1);
+				const int destiny_bytes = sizeof(TCHAR) * (destiny.size() + 1);
 
 				PlaneControlMessage message = ready_message(plane_main, TYPE_NEXT_DESTINY);
 				memcpy(message.data.airport_name, destiny.c_str(), destiny_bytes);
@@ -56,19 +56,24 @@ void enter_text_interface_plane(PlaneMain* plane_main) {
 			} else
 				tcout << _T("Invalid Syntax -> destiny <name>") << endl;
 		} else if (command == _T("board")) {
-			if (plane_main->flight_ready) {
+			if (plane_main->this_plane->flight_ready) {
 
+				plane_main->this_plane->flight_ready = false;
+
+				PlaneControlMessage message = ready_message(plane_main, TYPE_TO_BOARD);
+				plane_main->control_buffer->set_next_element(message);
+				tcout << _T("Boarding") << endl;
 			} else {
-				tcout << _T("No defined destiny\n");
+				tcout << _T("No defined destiny") << endl;
 			}
 		} else if (command == _T("fly")) {
-			if (plane_main->flight_ready) {
+			if (plane_main->this_plane->flight_ready) {
 				PlaneControlMessage message = ready_message(plane_main, TYPE_START_TRIP);
 				plane_main->control_buffer->set_next_element(message);
 
 				Plane* plane = plane_main->this_plane;
 				int result = -1;
-				DWORD sleep_time = 1000 / plane->velocity;
+				const DWORD sleep_time = 1000 / plane->velocity;
 
 				while (true) {
 
@@ -76,8 +81,7 @@ void enter_text_interface_plane(PlaneMain* plane_main) {
 
 						Sleep(sleep_time);
 
-						Position next_pos;
-						next_pos = plane->position;
+						Position next_pos = plane->position;
 
 						//TODO remove this
 						// -------------------------------------------------------------------
@@ -97,7 +101,7 @@ void enter_text_interface_plane(PlaneMain* plane_main) {
 
 						/*result = move(plane->position.x, plane->position.y,
 							plane_main->destiny_position.x, plane_main->destiny_position.y,
-							&position.x, &position.y);*/
+							&next_pos.x, &next_pos.y);*/
 
 
 						if (result == PLANE_MOVED) {

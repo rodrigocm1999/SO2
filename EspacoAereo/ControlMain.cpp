@@ -51,11 +51,12 @@ void ControlMain::plane_left_airport(unsigned char plane_offset) {
 	Plane* plane = get_plane(plane_offset);
 	Airport* airport = get_airport(plane->origin_airport_id);
 
-	for (int i = 0; i < airport->planes.size(); ++i) {
+	for (unsigned int i = 0; i < airport->planes.size(); ++i) {
 
 		Plane* cur_plane = airport->planes[i];
 		if (cur_plane == plane) {
 			airport->planes.erase(airport->planes.begin() + i);
+			break;
 		}
 	}
 }

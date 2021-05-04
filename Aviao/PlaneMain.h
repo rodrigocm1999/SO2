@@ -8,7 +8,6 @@ public:
 
 	bool exit = false;
 
-	bool flight_ready = false;
 	Position destiny_position;
 	
 	CircularBuffer* receiving_buffer;

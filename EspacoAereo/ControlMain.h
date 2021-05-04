@@ -30,12 +30,12 @@ public:
 	ControlMain(SharedControl* shared_control, Plane* planes, HANDLE handle_mapped_file);
 	~ControlMain();
 
-	bool add_airport(const TCHAR * name,int x,int y);
+	bool add_airport(const TCHAR* name, int x, int y);
 	Airport* get_airport(TSTRING name);
 	Airport* get_airport(unsigned int id);
 	void plane_left_airport(unsigned char plane_offset);
 	Plane* get_plane(unsigned char plane_offset);
-	
+
 	CircularBuffer* get_plane_buffer(int offset);
 
 };
