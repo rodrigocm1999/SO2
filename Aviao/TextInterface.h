@@ -24,10 +24,20 @@ using namespace std;
 #define PLANE_ARRIVED 0
 #define PLANE_MOVED 1
 
+// TODO move the function to a proper place
+void exit_everything(PlaneMain* plane_main);
+
+PlaneControlMessage ready_message(PlaneMain* plane_main, int type) {
+	PlaneControlMessage message;
+	message.plane_offset = plane_main->this_plane->offset;
+	message.type = type;
+	return message;
+}
+
 void enter_text_interface_plane(PlaneMain* plane_main) {
-	
+
 	while (!plane_main->exit) {
-		
+
 		tcout << _T("> ");
 		TSTRING input;
 		getline(tcin, input);
@@ -38,12 +48,9 @@ void enter_text_interface_plane(PlaneMain* plane_main) {
 			if (input_parts.size() == 2) {
 				TSTRING destiny = input_parts[1];
 				int destiny_bytes = sizeof(TCHAR) * (destiny.size() + 1);
-				memcpy(plane_main->this_plane->destiny, destiny.c_str(), destiny_bytes);
 
-				PlaneControlMessage message;
-				message.plane_offset = plane_main->this_plane->offset;
-				message.type = TYPE_NEXT_DESTINY;
-				memcpy(message.data.airport_name, plane_main->this_plane->destiny, destiny_bytes);
+				PlaneControlMessage message = ready_message(plane_main, TYPE_NEXT_DESTINY);
+				memcpy(message.data.airport_name, destiny.c_str(), destiny_bytes);
 				plane_main->control_buffer->set_next_element(message);
 
 			} else
@@ -56,8 +63,11 @@ void enter_text_interface_plane(PlaneMain* plane_main) {
 			}
 		} else if (command == _T("fly")) {
 			if (plane_main->flight_ready) {
+				PlaneControlMessage message = ready_message(plane_main, TYPE_START_TRIP);
+				plane_main->control_buffer->set_next_element(message);
+
 				Plane* plane = plane_main->this_plane;
-				int result = 0;
+				int result = -1;
 				DWORD sleep_time = 1000 / plane->velocity;
 
 				while (true) {
@@ -66,36 +76,52 @@ void enter_text_interface_plane(PlaneMain* plane_main) {
 
 						Sleep(sleep_time);
 
-						Position position;
+						Position next_pos;
+						next_pos = plane->position;
 
-						result = move(plane->position.x, plane->position.y,
+						//TODO remove this
+						// -------------------------------------------------------------------
+						Position& cur_pos = plane->position;
+						Position& des_pos = plane_main->destiny_position;
+
+						if (cur_pos.x < des_pos.x) next_pos.x = cur_pos.x + 1;
+						else if (cur_pos.x > des_pos.x) next_pos.x = cur_pos.x - 1;
+						if (cur_pos.y < des_pos.y) next_pos.y = cur_pos.y + 1;
+						else if (cur_pos.y > des_pos.y) next_pos.y = cur_pos.y - 1;
+
+						result = PLANE_MOVED;
+
+						if (cur_pos.x == des_pos.x && cur_pos.y == des_pos.y)
+							result = PLANE_ARRIVED;
+						// -------------------------------------------------------------------
+
+						/*result = move(plane->position.x, plane->position.y,
 							plane_main->destiny_position.x, plane_main->destiny_position.y,
-							&position.x, &position.y);
+							&position.x, &position.y);*/
 
 
 						if (result == PLANE_MOVED) {
-							plane->position = position;
+							plane->position = next_pos;
 
 						} else if (result == PLANE_ARRIVED) {
-							plane->position = position;
+							plane->position = next_pos;
 							break;
 						} else {
 							tcout << _T("What the heck happened. Error when flying. move() returned error\n");
-							break;
+							exit_everything(plane_main);
+							exit(-1);
 						}
-
 					}
 
-					PlaneControlMessage message;
-					message.plane_offset = plane_main->this_plane->offset;
-
 					if (result == PLANE_MOVED) {
-						message.type = TYPE_PLANE_MOVED;
+						message = ready_message(plane_main, TYPE_PLANE_MOVED);
 						message.data.position = plane->position;
 						plane_main->control_buffer->set_next_element(message);
+						tcout << _T("Plane moved to : ") << plane->position.x << _T(",") << plane->position.y << endl;
 					} else if (result == PLANE_ARRIVED) {
-						message.type = TYPE_FINISHED_TRIP;
+						message = ready_message(plane_main, TYPE_FINISHED_TRIP);
 						plane_main->control_buffer->set_next_element(message);
+						tcout << _T("Plane arrived at destination") << endl;
 						break;
 					}
 				}

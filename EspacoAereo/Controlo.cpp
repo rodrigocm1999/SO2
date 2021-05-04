@@ -79,7 +79,7 @@ int _tmain(int argc, TCHAR** argv) {
 	}
 
 	// -----------------------------------------------------------------------
-	HANDLE timer = CreateWaitableTimer(nullptr, TRUE, nullptr); // TODO make the checker for a dead plane
+	HANDLE timer = CreateWaitableTimer(nullptr, TRUE, nullptr); // TODO make the checker for a dead planes
 	//WaitForSingleObject(timer, INFINITE);
 	// -----------------------------------------------------------------------
 

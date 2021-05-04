@@ -33,8 +33,6 @@ DWORD WINAPI receive_updates(LPVOID param) {
 		const PlaneControlMessage message = plane_main->receiving_buffer->get_next_element();
 
 		switch (message.type) {
-		case TYPE_START_TRIP:
-			break;
 		case TYPE_CONTROL_EXITING:
 			tcout << _T("Control Exiting\n");
 			plane_main->exit = true;
@@ -53,6 +51,7 @@ DWORD WINAPI receive_updates(LPVOID param) {
 		}
 		case TYPE_PLANE_BAD_DESTINY: {
 			plane_main->flight_ready = false;
+			plane_main->this_plane->destiny_airport_id = NOT_DEFINED_AIRPORT;
 			tcout << _T("Invalid destiny\n");
 			break;
 		}default:
@@ -158,8 +157,8 @@ int _tmain(int argc, TCHAR** argv) {
 				this_plane->heartbeat = true;
 				this_plane->velocity = velocity;
 				this_plane->max_passengers = capacity;
-				memcpy(this_plane->origin, starting_port.c_str(), sizeof(TCHAR) * (starting_port.size() + 1));
-
+				this_plane->destiny_airport_id = NOT_DEFINED_AIRPORT;
+				this_plane->origin_airport_id = NOT_DEFINED_AIRPORT;
 				break;
 			}
 		}

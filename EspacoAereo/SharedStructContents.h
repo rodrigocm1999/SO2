@@ -40,6 +40,8 @@
 #define BUFFER_SIZE 30
 #define CIRC_BUFFER_SIZE 5
 
+#define NOT_DEFINED_AIRPORT -1
+
 typedef struct {
 	int x; int y;
 }Position;
@@ -77,12 +79,12 @@ typedef struct {
 
 	bool is_flying;
 	Position position;
-
+	
 	bool in_use;
 	bool heartbeat;
 
-	TCHAR origin[BUFFER_SIZE];
-	TCHAR destiny[BUFFER_SIZE];
+	unsigned int origin_airport_id;
+	unsigned int destiny_airport_id;
 
 	CircBuffer buffer;
 }Plane;

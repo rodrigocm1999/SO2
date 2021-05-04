@@ -20,7 +20,6 @@ using namespace std;
 #define tcin cin
 #endif
 
-
 void enter_text_interface(ControlMain* control_main, bool* exit) {
 	while (!*exit) {
 		tcout << _T("Menu -------------\n");
@@ -38,8 +37,11 @@ void enter_text_interface(ControlMain* control_main, bool* exit) {
 				if (pos_x < 0 || pos_x >= MAP_SIZE || pos_y < 0 || pos_y >= MAP_SIZE) {
 					tcout << _T("Invalid position entered\n");
 				} else {
-					auto airport = new Airport(name, pos_x, pos_y);
-					control_main->add_airport(airport);
+					if(control_main->add_airport(name, pos_x, pos_y)){
+						tcout << _T("Added airport") << endl;
+					}else{
+						tcout << _T("Airport with the same name or in the same position already exists") << endl;
+					}
 				}
 			} else {
 				tcout << _T("Invalid Syntax -> new_airport <name> <posX> <posY>\n");
@@ -51,11 +53,19 @@ void enter_text_interface(ControlMain* control_main, bool* exit) {
 				TSTRING type = input_parts[1];
 
 				if (type == _T("airports")) {
-					for (Airport* airport : control_main->airports) {
-						tcout << _T("\tname : ") << airport->name << _T("\n\tposition : ") << airport->position.x << _T(", ") << airport->position.y << endl;
+					for (pair<const int, Airport*> pair : control_main->airports) {
+						Airport* airport = pair.second;
+
+						tcout << _T("Airport -> name : ") << airport->name << _T("\tposition : ") << airport->position.x << _T(", ") << airport->position.y << endl;
+
+						for (Plane* plane : airport->planes) {
+
+							tcout << _T("\tPlane -> offset : ") << plane->offset << _T(", max passangers : ") << plane->max_passengers << _T(", passagers : ") << endl;
+							//TODO put passengers
+						}
 					}
 				} else if (type == _T("planes")) {
-
+					
 				} else if (type == _T("passengers")) {
 
 				}

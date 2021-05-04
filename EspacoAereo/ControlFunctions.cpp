@@ -34,34 +34,43 @@ DWORD WINAPI receive_updates(LPVOID param) {
 			Airport* airport = control->get_airport(airport_name);
 			if (airport != nullptr) {
 				plane->position = airport->position;
+				plane->origin_airport_id = airport->id;
+				airport->planes.push_back(plane);
 			} else {
+				// buffer mutexes get closed at the end of the scope
+				// but it doesn't matter because this planes is leaving
 				CircularBuffer buffer(&plane->buffer, plane_offset);
 				message.type = TYPE_PLANE_NOT_ALLOWED;
 				buffer.set_next_element(message);
-
-				//TODO mutex maybe
+				
 				plane->in_use = false;
 			}
 			break;
 		}
-		case TYPE_NEXT_DESTINY: {// maybe there is no need for this
-
+		case TYPE_NEXT_DESTINY: {
 			TSTRING airport_name = message.data.airport_name;
-			Plane* new_plane = &control->planes[plane_offset];
 
 			CircularBuffer* buffer = control->get_plane_buffer(plane_offset);
+			Airport* destiny = control->get_airport(airport_name);
 
-			Airport* airport = control->get_airport(airport_name);
-			if (airport != nullptr) {
+			if (destiny != nullptr && destiny->id != plane->origin_airport_id) {
 				message.type = TYPE_PLANE_OK_DESTINY;
-				message.data.position = airport->position;
+				message.data.position = destiny->position;
+				plane->destiny_airport_id = destiny->id;
+				buffer->set_next_element(message);
+
+				tcout << _T("Plane offset -> ") << plane_offset << _T(", changed destiny to : ") << airport_name << endl;
+
+				//TODO later change the peoples maybe
 			} else {
 				message.type = TYPE_PLANE_BAD_DESTINY;
+				buffer->set_next_element(message);
 			}
-			buffer->set_next_element(message);
 			break;
 		}
 		case TYPE_START_TRIP: {
+			control->plane_left_airport(plane_offset);
+			tcout << _T("Plane offset -> ") << plane_offset << _T(", left the airport") << endl;
 			break;
 		}
 		case TYPE_PLANE_MOVED: {
@@ -70,6 +79,7 @@ DWORD WINAPI receive_updates(LPVOID param) {
 			break;
 		}
 		case TYPE_TO_BOARD: {
+			tcout << _T("Plane offset -> ") << plane->offset << _T(", left") << endl;
 			break;
 		}
 		case TYPE_PLANE_LEAVES: {
@@ -77,12 +87,15 @@ DWORD WINAPI receive_updates(LPVOID param) {
 			break;
 		}
 		case TYPE_PLANE_CRASHES: {
+			tcout << _T("Plane offset -> ") << plane->offset << _T(", crashed") << endl;
 			break;
 		}case TYPE_FINISHED_TRIP: {
-			tcout << _T("Plane offset -> ") << plane->offset << _T(", arrived at : ") << plane->destiny << _T(", from : ") << plane->origin << endl;
+			tcout << _T("Plane offset -> ") << plane->offset
+				<< _T(", arrived at : ") << control->get_airport(plane->destiny_airport_id)->name
+				<< _T(", from : ") << control->get_airport(plane->origin_airport_id)->name << endl;
 			break;
 		}default:
-			tcout << _T("Invalid type received from plane : ") << message.plane_offset << endl;
+			tcout << _T("Invalid type received from planes : ") << message.plane_offset << endl;
 		}
 	}
 	return 0;
