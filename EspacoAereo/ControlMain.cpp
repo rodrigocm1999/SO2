@@ -13,11 +13,16 @@ ControlMain::ControlMain(SharedControl* shared_control, Plane* planes, HANDLE ha
 }
 
 ControlMain::~ControlMain() {
-	delete(this->receiving_buffer);
+	delete(receiving_buffer);
 
 	for (int i = 0; i < shared_control->max_plane_amount; ++i) {
 		if (buffer_planes[i] != nullptr)
 			delete(buffer_planes[i]);
+	}
+	delete(buffer_planes);
+
+	for (auto pair : this->airports) {
+		delete(pair.second);
 	}
 }
 

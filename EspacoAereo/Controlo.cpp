@@ -78,13 +78,6 @@ int _tmain(int argc, TCHAR** argv) {
 		return -1;
 	}
 
-	// -----------------------------------------------------------------------
-	HANDLE timer = CreateWaitableTimer(nullptr, TRUE, nullptr); // TODO make the checker for a dead planes
-	//WaitForSingleObject(timer, INFINITE);
-	// -----------------------------------------------------------------------
-
-
-
 	//Create Shared Memory ---------------------------------------------------
 	const DWORD shared_memory_size = sizeof(SharedControl) + sizeof(Plane) * max_planes; //Soma do espaço necessário a alocar
 
@@ -107,16 +100,14 @@ int _tmain(int argc, TCHAR** argv) {
 		memset(control_main->shared_control->map, MAP_EMPTY, sizeof(control_main->shared_control->map));
 	}
 
+
 	control_main->receiving_thread = create_thread(receive_updates, control_main);
+	control_main->heartbeat_thread = create_thread(heartbeat_checker, control_main);
 
 
 	enter_text_interface(control_main, &exit_bool);
 
 	exit_everything(control_main);
-
-
-	//TODO Permite a criação de aeroportos, mediante indicação pela interface com o utilizador do nome do aeroporto e das suas coordenadas
-	//	Não deverá existir nenhum outro aeroporto num raio de 10 “posições” nem nenhum outro aeroporto com esse nome. Não existe o conceito de “remover aeroportos”
 
 	//TODO Pode assumir que existe um número máximo tanto de aeroportos como de aviões. 
 	// Estas quantidades deverão estar definidas no Registry.Quando os valores máximos são atingidos, os

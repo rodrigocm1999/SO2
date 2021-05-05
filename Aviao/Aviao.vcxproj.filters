@@ -27,15 +27,18 @@
     <ClCompile Include="PlaneMain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PlaneFunctions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TextInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PlaneMain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TextInterface.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SO2_TP_DLL_2021.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\EspacoAereo\CircularBuffer.h">
@@ -47,5 +50,16 @@
     <ClInclude Include="..\EspacoAereo\Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SO2_TP_DLL_2021.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PlaneFunctions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="SO2_TP_DLL_2021.lib">
+      <Filter>Resource Files</Filter>
+    </Library>
   </ItemGroup>
 </Project>

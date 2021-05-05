@@ -73,11 +73,13 @@ DWORD WINAPI receive_updates(LPVOID param) {
 			tcout << _T("Plane offset -> ") << plane_offset << _T(", left the airport") << endl;
 			break;
 		}
+
 		case TYPE_PLANE_MOVED: {
 			Position& position = message.data.position;
 			tcout << _T("Plane offset -> ") << plane->offset << _T(", moved to : ") << position.x << _T(",") << position.y << endl;
 			break;
 		}
+
 		case TYPE_TO_BOARD: {
 			tcout << _T("Plane offset -> ") << plane->offset << _T(", boarding") << endl;
 			plane->flight_ready = false;
@@ -87,16 +89,23 @@ DWORD WINAPI receive_updates(LPVOID param) {
 			CircularBuffer* buffer = control->get_plane_buffer(plane_offset);
 			break;
 		}
+
 		case TYPE_PLANE_LEAVES: {
 			tcout << _T("Plane offset -> ") << plane->offset << _T(", left") << endl;
-			control->plane_left_airport(plane_offset);
+
+			if (plane->origin_airport_id != NOT_DEFINED_AIRPORT) {
+				control->plane_left_airport(plane_offset);
+			}
 			break;
 		}
+
 		case TYPE_PLANE_CRASHES: {
 			tcout << _T("Plane offset -> ") << plane->offset << _T(", crashed") << endl;
 			//TODO tell the people to shutdown
 			break;
-		}case TYPE_FINISHED_TRIP: {
+		}
+
+		case TYPE_FINISHED_TRIP: {
 			tcout << _T("Plane offset -> ") << plane->offset
 				<< _T(", arrived at : ") << control->get_airport(plane->destiny_airport_id)->name
 				<< _T(", from : ") << control->get_airport(plane->origin_airport_id)->name << endl;
@@ -124,21 +133,58 @@ void exit_everything(ControlMain* control_main) {
 		Plane* current_plane = &control_main->planes[i];
 		if (current_plane->in_use) {
 
-			TCHAR buf[8];
-			_stprintf_s(buf, 8, _T("%d"), i);
-			CircularBuffer buffer(&current_plane->buffer, i);
+			CircularBuffer* buffer = control_main->get_plane_buffer(i);
 
 			PlaneControlMessage message;
 			message.type = TYPE_CONTROL_EXITING;
-			buffer.set_next_element(message);
+			buffer->set_next_element(message);
 		}
 	}
 
 	CloseHandle(control_main->receiving_thread);
 	UnmapViewOfFile(control_main->shared_control);
 	CloseHandle(control_main->handle_mapped_file);
+	CloseHandle(control_main->heartbeat_thread);
 
 	delete(control_main);
 
 	exit(0);
+}
+
+DWORD WINAPI heartbeat_checker(LPVOID param) {
+
+	ControlMain* control = (ControlMain*)param;
+
+	while (!control->exit) {
+
+		Sleep(HEARTBEAT_TIME_CONTROL);
+
+		for (int i = 0; i < control->shared_control->max_plane_amount; ++i) {
+			Plane* plane = control->get_plane(i);
+
+			if (plane->in_use) {
+
+				if (!plane->heartbeat) {
+					plane->in_use = false;
+					tcout << _T("Plane offset -> ") << i << _T(", disconnected") << endl;
+
+					if (plane->is_flying) {
+
+						PlaneControlMessage message;
+						message.plane_offset = i;
+						message.type = TYPE_PLANE_CRASHES;
+						control->receiving_buffer->set_next_element(message);
+
+						//TODO warn passengers if mid flight	
+					}
+
+				} else {
+					plane->heartbeat = false;
+				}
+			}
+
+		}
+	}
+
+	return 0;
 }

@@ -24,6 +24,7 @@ public:
 	Plane* const planes;
 	HANDLE const handle_mapped_file;
 	HANDLE receiving_thread;
+	HANDLE heartbeat_thread;
 	// --------------------------------
 
 

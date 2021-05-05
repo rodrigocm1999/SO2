@@ -12,4 +12,6 @@ PlaneMain::PlaneMain(SharedControl* shared_control, Plane* planes, Plane* this_p
 PlaneMain::~PlaneMain() {
 	delete(this->receiving_buffer);
 	delete(this->control_buffer);
+
+	
 }

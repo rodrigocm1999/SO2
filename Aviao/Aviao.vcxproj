@@ -147,15 +147,21 @@
     <ClCompile Include="..\EspacoAereo\CircularBuffer.cpp" />
     <ClCompile Include="..\EspacoAereo\Utils.cpp" />
     <ClCompile Include="Aviao.cpp" />
+    <ClCompile Include="PlaneFunctions.cpp" />
     <ClCompile Include="PlaneMain.cpp" />
+    <ClCompile Include="TextInterface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\EspacoAereo\CircularBuffer.h" />
     <ClInclude Include="..\EspacoAereo\SharedStructContents.h" />
     <ClInclude Include="..\EspacoAereo\Utils.h" />
+    <ClInclude Include="PlaneFunctions.h" />
     <ClInclude Include="PlaneMain.h" />
     <ClInclude Include="SO2_TP_DLL_2021.h" />
     <ClInclude Include="TextInterface.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="SO2_TP_DLL_2021.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

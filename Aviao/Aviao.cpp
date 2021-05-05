@@ -9,6 +9,7 @@
 #include "CircularBuffer.h"
 #include "PlaneMain.h"
 #include "TextInterface.h"
+#include "PlaneFunctions.h"
 
 using namespace std;
 
@@ -24,66 +25,6 @@ using namespace std;
 #define tstringstream std::stringstream
 #endif
 
-void exit_everything(PlaneMain* plane_main);
-
-DWORD WINAPI receive_updates(LPVOID param) {
-	PlaneMain* plane_main = (PlaneMain*)param;
-
-	while (true) {
-		const PlaneControlMessage message = plane_main->receiving_buffer->get_next_element();
-
-		switch (message.type) {
-		case TYPE_CONTROL_EXITING:
-			tcout << _T("Control Exiting\n");
-			plane_main->exit = true;
-			exit_everything(plane_main);
-			break;
-		case TYPE_PLANE_NOT_ALLOWED:
-			tcout << _T("Indicated airport doesn't exist\n");
-			plane_main->exit = true;
-			exit_everything(plane_main);
-			break;
-		case TYPE_PLANE_OK_DESTINY: {
-			plane_main->destiny_position = message.data.position;
-			plane_main->this_plane->flight_ready = true;
-			tcout << _T("You are now allowed to fly to your destiny\n");
-			break;
-		}
-		case TYPE_PLANE_BAD_DESTINY: {
-			plane_main->this_plane->flight_ready = false;
-			plane_main->this_plane->destiny_airport_id = NOT_DEFINED_AIRPORT;
-			tcout << _T("Invalid destiny\n");
-			break;
-		}default:
-			tcout << _T("Invalid type received from control :") << message.type << endl;
-		}
-	}
-}
-
-DWORD WINAPI heartbeat(LPVOID param) {
-	bool* b = (bool*)param;
-	*b = true;
-	return -1;
-}
-
-void exit_everything(PlaneMain* plane_main) {
-	tcout << _T("Exiting\n-----------------------------");
-
-	plane_main->this_plane->in_use = false;
-	PlaneControlMessage message;
-	message.plane_offset = plane_main->this_plane->offset;
-	message.type = TYPE_PLANE_LEAVES;
-	plane_main->control_buffer->set_next_element(message);
-
-	UnmapViewOfFile(plane_main->shared_control);
-	CloseHandle(plane_main->handle_mapped_file);
-	CloseHandle(plane_main->receiving_thread);
-	ReleaseSemaphore(plane_main->semaphore_plane_counter, 1, nullptr);
-
-	delete(plane_main);
-
-	exit(0);
-}
 
 int _tmain(int argc, TCHAR** argv) {
 
@@ -157,6 +98,7 @@ int _tmain(int argc, TCHAR** argv) {
 				this_plane->heartbeat = true;
 				this_plane->velocity = velocity;
 				this_plane->max_passengers = capacity;
+				this_plane->is_flying = false;
 				this_plane->destiny_airport_id = NOT_DEFINED_AIRPORT;
 				this_plane->origin_airport_id = NOT_DEFINED_AIRPORT;
 				break;
@@ -176,15 +118,14 @@ int _tmain(int argc, TCHAR** argv) {
 
 
 	plane_main->receiving_thread = create_thread(receive_updates, plane_main);
+	plane_main->heartbeat_thread = create_thread(heartbeat, plane_main);
+
 
 	PlaneControlMessage message;
 	message.plane_offset = plane_main->this_plane->offset;
 	message.type = TYPE_NEW_PLANE;
 	memcpy(message.data.airport_name, starting_port.c_str(), sizeof(TCHAR) * (starting_port.size() + 1));
 	plane_main->control_buffer->set_next_element(message);
-
-
-	//TODO heartbeat
 
 	enter_text_interface_plane(plane_main);
 
@@ -198,11 +139,5 @@ int _tmain(int argc, TCHAR** argv) {
 	//		Se o fizer a meio do voo, considera-se que houve um acidente e os passageiros perdem-se.
 	//		Se o fizer num aeroporto, considera-se que o piloto se reformou.
 	//		Em ambos os casos, o avião deixa de existir no sistema.
-
-
-	//TODO Funcionalidades principais:
-	//	Movimenta-se no espaço aéreo, partindo sempre de um aeroporto em direção a outro.A lógica desta
-	//		movimentação não é aqui apresentada, já que será fornecida uma DLL com a sua implementação feita
-	//	Quando chega a um novo aeroporto, deve comunicar a sua chegada ao controlador aéreo.
 
 }

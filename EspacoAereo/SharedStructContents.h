@@ -43,6 +43,11 @@
 
 #define NOT_DEFINED_AIRPORT (-1)
 
+
+#define HEARTBEAT_TIME_CONTROL 3000L
+#define HEARTBEAT_TIME_PLANE 2000L
+
+
 typedef struct position {
 	int x;
 	int y;
