@@ -76,18 +76,33 @@ DWORD WINAPI fly_plane(LPVOID param) {
 			result = move(plane->position.x, plane->position.y,
 				plane_main->destiny_position.x, plane_main->destiny_position.y,
 				&next_pos.x, &next_pos.y);
+
 			//TODO evitar colisões
+			auto control = plane_main->shared_control;
+			/*if (control->map[next_pos.y][next_pos.x] == MAP_EMPTY
+				|| control->map[next_pos.y][next_pos.x] == MAP_AIRPORT
+				|| control->map[next_pos.y][next_pos.x] == plane->offset) {*/
 
 			if (result == PLANE_MOVED) {
+				
 				plane->position = next_pos;
-
-			} else if (result == PLANE_ARRIVED) {
+				control->map[plane->position.y][plane->position.x] = MAP_EMPTY;
+				control->map[next_pos.y][next_pos.x] = plane->offset;
+			}
+			else if (result == PLANE_ARRIVED) {
+				
+				control->map[plane->position.y][plane->position.x] = MAP_EMPTY;
 				plane->position = next_pos;
 				break;
-			} else {
+			}
+			else {
 				tcout << _T("What the heck happened. Error when flying. move() returned error\n");
 				exit_everything(plane_main);
 			}
+			/*}
+			else {
+				tcout << _T("Waited to avoid colision") << endl;
+			}*/
 		}
 
 		if (result == PLANE_MOVED) {
@@ -95,7 +110,8 @@ DWORD WINAPI fly_plane(LPVOID param) {
 			message.data.position = plane->position;
 			plane_main->control_buffer->set_next_element(message);
 			tcout << _T("Plane moved to : ") << plane->position.x << _T(",") << plane->position.y << endl;
-		} else if (result == PLANE_ARRIVED) {
+		}
+		else if (result == PLANE_ARRIVED) {
 			plane->is_flying = false;
 			plane->flight_ready = false;
 

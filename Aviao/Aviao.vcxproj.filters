@@ -41,19 +41,19 @@
     <ClInclude Include="TextInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\EspacoAereo\CircularBuffer.h">
+    <ClInclude Include="SO2_TP_DLL_2021.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\EspacoAereo\SharedStructContents.h">
+    <ClInclude Include="PlaneFunctions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\EspacoAereo\CircularBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\EspacoAereo\Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SO2_TP_DLL_2021.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PlaneFunctions.h">
+    <ClInclude Include="..\EspacoAereo\SharedStructContents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
