@@ -7,7 +7,7 @@
 
 #define TSTRING std::basic_string<TCHAR>
 
-std::vector<TSTRING> stringSplit(const TSTRING& ori_str, const TSTRING delimiter);
+std::vector<TSTRING> string_split(const TSTRING& ori_str, const TSTRING delimiter);
 
 void* allocate_shared_memory(HANDLE& mapped_file,DWORD size);
 

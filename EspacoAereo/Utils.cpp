@@ -4,7 +4,7 @@
 
 using namespace std;
 
-vector<TSTRING> stringSplit(const TSTRING& ori_str, const TSTRING delimiter) {
+vector<TSTRING> string_split(const TSTRING& ori_str, const TSTRING delimiter) {
 	vector<TSTRING> list;
 	TSTRING str(ori_str);
 	size_t pos;

@@ -140,14 +140,9 @@ void exit_everything(ControlMain* control_main) {
 			buffer->set_next_element(message);
 		}
 	}
-
-	CloseHandle(control_main->receiving_thread);
-	UnmapViewOfFile(control_main->shared_control);
-	CloseHandle(control_main->handle_mapped_file);
-	CloseHandle(control_main->heartbeat_thread);
-
+	
 	delete(control_main);
-
+	
 	exit(0);
 }
 

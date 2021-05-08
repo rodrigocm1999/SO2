@@ -76,7 +76,6 @@ DWORD WINAPI fly_plane(LPVOID param) {
 			result = move(plane->position.x, plane->position.y,
 				plane_main->destiny_position.x, plane_main->destiny_position.y,
 				&next_pos.x, &next_pos.y);
-			//TODO evitar colisões
 
 			if (result == PLANE_MOVED) {
 				plane->position = next_pos;

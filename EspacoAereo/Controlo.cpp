@@ -22,26 +22,6 @@ using namespace std;
 #endif
 
 
-bool exit_bool = false;
-
-BOOL WINAPI console_handler(DWORD dwType) {
-	switch (dwType) {
-	case CTRL_C_EVENT:
-		tcout << _T("Ctrl + C\n");
-		exit_bool = true;
-		//TODO make da ting go down when it should
-		break;
-	case CTRL_BREAK_EVENT:
-		tcout << _T("Ctrl + break\n");
-		break;
-	default:
-		tcout << _T("Non Defined Event\n");
-	}
-	return false;
-}
-
-
-
 int _tmain(int argc, TCHAR** argv) {
 
 #ifdef UNICODE
@@ -73,11 +53,6 @@ int _tmain(int argc, TCHAR** argv) {
 	// -----------------------------------------------------------------------
 
 
-	if (!SetConsoleCtrlHandler(console_handler, true)) {
-		tcout << _T("Unable to set console handler!\n");
-		return -1;
-	}
-
 	//Create Shared Memory ---------------------------------------------------
 	const DWORD shared_memory_size = sizeof(SharedControl) + sizeof(Plane) * max_planes; //Soma do espaço necessário a alocar
 
@@ -105,7 +80,7 @@ int _tmain(int argc, TCHAR** argv) {
 	control_main->heartbeat_thread = create_thread(heartbeat_checker, control_main);
 
 
-	enter_text_interface(control_main, &exit_bool);
+	enter_text_interface(control_main);
 
 	exit_everything(control_main);
 

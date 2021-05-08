@@ -25,6 +25,7 @@ public:
 	HANDLE const handle_mapped_file;
 	HANDLE receiving_thread;
 	HANDLE heartbeat_thread;
+	HANDLE interface_thread;
 	// --------------------------------
 
 

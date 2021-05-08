@@ -130,14 +130,4 @@ int _tmain(int argc, TCHAR** argv) {
 	enter_text_interface_plane(plane_main);
 
 	exit_everything(plane_main);
-
-	//TODO Interação / Comandos:
-	//	Definir o próximo destino(depois de iniciada a viagem este não pode ser alterado). falta conseguir escrever exit e sair
-	//	Embarcar passageiros(todos os que estiverem nesse aeroporto para esse destino) e que caibam no avião.
-	//	Quando em viagem, o piloto não pode fazer nada a não ser terminar o programa.
-	//	O piloto pode terminar o programa a qualquer altura
-	//		Se o fizer a meio do voo, considera-se que houve um acidente e os passageiros perdem-se.
-	//		Se o fizer num aeroporto, considera-se que o piloto se reformou.
-	//		Em ambos os casos, o avião deixa de existir no sistema.
-
 }

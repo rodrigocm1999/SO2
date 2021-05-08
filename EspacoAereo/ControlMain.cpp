@@ -1,5 +1,7 @@
 #include "ControlMain.h"
 
+#include "Utils.h"
+
 using namespace std;
 
 ControlMain::ControlMain(SharedControl* shared_control, Plane* planes, HANDLE handle_mapped_file) :
@@ -14,7 +16,7 @@ ControlMain::ControlMain(SharedControl* shared_control, Plane* planes, HANDLE ha
 
 ControlMain::~ControlMain() {
 	delete(receiving_buffer);
-
+	
 	for (int i = 0; i < shared_control->max_plane_amount; ++i) {
 		if (buffer_planes[i] != nullptr)
 			delete(buffer_planes[i]);
@@ -24,13 +26,26 @@ ControlMain::~ControlMain() {
 	for (auto pair : this->airports) {
 		delete(pair.second);
 	}
+
+	CloseHandle(receiving_thread);
+	UnmapViewOfFile(shared_control);
+	CloseHandle(handle_mapped_file);
+	CloseHandle(heartbeat_thread);
 }
 
 bool ControlMain::add_airport(const TCHAR* name, int x, int y) {
+	Position position;
+	position.x = x;
+	position.y = y;
 
-	for (pair<const int, Airport*> pair : this->airports)
-		if (pair.second->name == name || pair.second->position.x == x && pair.second->position.y == y)
+	for (pair<const int, Airport*> pair : this->airports) {
+		Airport* airport = pair.second;
+		if (airport->name == name || airport->position.x == x && airport->position.y == y)
 			return false;
+
+		if(grid_distance(airport->position, position) <= MINIMUM_AIRPORT_GRID_DISTANCE)
+			return  false;
+	}
 
 	Airport* airport = new Airport(this->airport_counter, name, x, y);
 	this->airport_counter++;

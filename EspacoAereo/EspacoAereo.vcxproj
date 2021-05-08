@@ -147,6 +147,7 @@
     <ClCompile Include="Controlo.cpp" />
     <ClCompile Include="ControlMain.cpp" />
     <ClCompile Include="RegistryStuff.cpp" />
+    <ClCompile Include="TextInterface.cpp" />
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>

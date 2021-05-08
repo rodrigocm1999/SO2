@@ -11,7 +11,7 @@ void enter_text_interface_plane(PlaneMain* plane_main) {
 		tcout << _T("> ");
 		TSTRING input;
 		getline(tcin, input);
-		vector<TSTRING> input_parts = stringSplit(input, _T(" "));
+		vector<TSTRING> input_parts = string_split(input, _T(" "));
 		auto command = input_parts[0];
 
 		if (command == _T("exit")) {
