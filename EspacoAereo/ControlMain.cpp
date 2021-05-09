@@ -14,6 +14,8 @@ ControlMain::ControlMain(SharedControl* shared_control, Plane* planes, HANDLE ha
 	ZeroMemory(buffer_planes, sizeof(CircularBuffer*) * shared_control->max_plane_amount);
 
 	shutdown_event = CreateEvent(nullptr, true, false, nullptr);
+
+	plane_entering_lock = CreateMutex(nullptr,FALSE, PLANE_LOCK_MUTEX);
 }
 
 ControlMain::~ControlMain() {
@@ -34,6 +36,7 @@ ControlMain::~ControlMain() {
 	CloseHandle(handle_mapped_file);
 	CloseHandle(heartbeat_thread);
 	CloseHandle(shutdown_event);
+	CloseHandle(plane_entering_lock);
 }
 
 bool ControlMain::add_airport(const TCHAR* name, int x, int y) {

@@ -49,70 +49,84 @@ int _tmain(int argc, TCHAR** argv) {
 		return -1;
 	}
 
-	PlaneMain* plane_main = nullptr;
-	{
-		const HANDLE semaphore_plane_counter = OpenSemaphoreW(SEMAPHORE_ALL_ACCESS, FALSE, SEMAPHORE_MAX_PLANES);
-		{
-			if (semaphore_plane_counter == NULL) {
-				tcout << _T("Error opening semaphore -> ") << GetLastError() << endl;
-				return -1;
-			}
-			const DWORD result = WaitForSingleObject(semaphore_plane_counter, 2000);
-			if (result == WAIT_TIMEOUT) {
-				tcout << _T("The control is full and doesnt allow more planes\n");
-				return -1;
-			}
-			if (result != WAIT_OBJECT_0) {
-				tcout << _T("Semaphore wait error : ") << GetLastError() << endl;
-				return -1;
-			}
-		}
-
-		const HANDLE handle_mapped_file = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, MAPPED_MEMORY_IDENTIFIER);
-		if (handle_mapped_file == NULL) {
-			tcout << _T("Could not open file mapping object (") << GetLastError() << _T(").\n");
-			ReleaseSemaphore(semaphore_plane_counter, 1, nullptr);
-			return -1;
-		}
-		void* shared_mem_pointer = MapViewOfFile(handle_mapped_file, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-		if (shared_mem_pointer == NULL) {
-			tcout << _T("Could not map view of file (") << GetLastError() << _T(").\n");
-			CloseHandle(handle_mapped_file);
-			ReleaseSemaphore(semaphore_plane_counter, 1, nullptr);
-			return -1;
-		}
-
-		auto shared_control = (SharedControl*)shared_mem_pointer;
-		auto planes = (Plane*)&shared_control[1];
-
-		Plane* this_plane = nullptr;
-
-		for (int i = 0; i < shared_control->max_plane_amount; ++i) {
-			if (!planes[i].in_use) {
-				this_plane = &planes[i];
-
-				this_plane->in_use = true;
-				this_plane->offset = i;
-				this_plane->heartbeat = true;
-				this_plane->velocity = velocity;
-				this_plane->max_passengers = capacity;
-				this_plane->is_flying = false;
-				this_plane->destiny_airport_id = NOT_DEFINED_AIRPORT;
-				this_plane->origin_airport_id = NOT_DEFINED_AIRPORT;
-				break;
-			}
-		}
-
-		if (this_plane == nullptr) {
-			tcout << _T("Critical Error. Should never happen. Plane did not find free spot\n");
-			UnmapViewOfFile(shared_mem_pointer);
-			CloseHandle(handle_mapped_file);
-			ReleaseSemaphore(semaphore_plane_counter, 1, nullptr);
-			return -1;
-		}
-
-		plane_main = new PlaneMain(shared_control, planes, this_plane, this_plane->offset, semaphore_plane_counter, handle_mapped_file);
+	const HANDLE plane_lock = OpenMutex(MUTEX_ALL_ACCESS, false, PLANE_LOCK_MUTEX);
+	if (plane_lock == nullptr) {
+		tcout << _T("Error opening lock mutex -> ") << GetLastError() << endl;
+		return -1;
 	}
+
+	DWORD result = WaitForSingleObject(plane_lock, 2000);
+	if (result != WAIT_OBJECT_0) {
+		tcout << _T("Planes cannot join right now") << endl;
+		return -1;
+	}
+
+	const HANDLE semaphore_plane_counter = OpenSemaphoreW(SEMAPHORE_ALL_ACCESS, FALSE, SEMAPHORE_MAX_PLANES);
+	{
+		if (semaphore_plane_counter == NULL) {
+			tcout << _T("Error opening semaphore -> ") << GetLastError() << endl;
+			ReleaseMutex(plane_lock);
+			return -1;
+		}
+		const DWORD result = WaitForSingleObject(semaphore_plane_counter, 2000);
+		if (result == WAIT_TIMEOUT) {
+			tcout << _T("The control is full and doesnt allow more planes\n");
+			ReleaseMutex(plane_lock);
+			return -1;
+		}
+		if (result != WAIT_OBJECT_0) {
+			tcout << _T("Semaphore wait error : ") << GetLastError() << endl;
+			ReleaseMutex(plane_lock);
+			return -1;
+		}
+	}
+
+	const HANDLE handle_mapped_file = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, MAPPED_MEMORY_IDENTIFIER);
+	if (handle_mapped_file == NULL) {
+		tcout << _T("Could not open file mapping object (") << GetLastError() << _T(").\n");
+		ReleaseSemaphore(semaphore_plane_counter, 1, nullptr);
+		ReleaseMutex(plane_lock);
+		return -1;
+	}
+	void* shared_mem_pointer = MapViewOfFile(handle_mapped_file, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+	if (shared_mem_pointer == NULL) {
+		tcout << _T("Could not map view of file (") << GetLastError() << _T(").\n");
+		CloseHandle(handle_mapped_file);
+		ReleaseSemaphore(semaphore_plane_counter, 1, nullptr);
+		ReleaseMutex(plane_lock);
+		return -1;
+	}
+
+	auto shared_control = (SharedControl*)shared_mem_pointer;
+	auto planes = (Plane*)&shared_control[1];
+
+	Plane* this_plane = nullptr;
+
+	for (int i = 0; i < shared_control->max_plane_amount; ++i) {
+		if (!planes[i].in_use) {
+			this_plane = &planes[i];
+
+			this_plane->in_use = true;
+			this_plane->offset = i;
+			this_plane->heartbeat = true;
+			this_plane->velocity = velocity;
+			this_plane->max_passengers = capacity;
+			this_plane->is_flying = false;
+			this_plane->destiny_airport_id = NOT_DEFINED_AIRPORT;
+			this_plane->origin_airport_id = NOT_DEFINED_AIRPORT;
+			break;
+		}
+	}
+
+	if (this_plane == nullptr) {
+		tcout << _T("Critical Error. Should never happen. Plane did not find free spot\n");
+		UnmapViewOfFile(shared_mem_pointer);
+		CloseHandle(handle_mapped_file);
+		ReleaseSemaphore(semaphore_plane_counter, 1, nullptr);
+		return -1;
+	}
+
+	PlaneMain* plane_main = new PlaneMain(shared_control, planes, this_plane, this_plane->offset, semaphore_plane_counter, handle_mapped_file);
 
 
 	plane_main->receiving_thread = create_thread(receive_updates, plane_main);
@@ -125,6 +139,9 @@ int _tmain(int argc, TCHAR** argv) {
 	memcpy(message.data.airport_name, starting_port.c_str(), sizeof(TCHAR) * (starting_port.size() + 1));
 	plane_main->control_buffer->set_next_element(message);
 
+	ReleaseMutex(plane_lock);
+
+	
 	enter_text_interface_plane(plane_main);
 
 	exit_everything(plane_main);

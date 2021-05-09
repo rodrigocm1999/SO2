@@ -27,6 +27,7 @@ public:
 	HANDLE heartbeat_thread;
 	HANDLE interface_thread;
 	HANDLE shutdown_event;
+	HANDLE plane_entering_lock;
 	// --------------------------------
 
 

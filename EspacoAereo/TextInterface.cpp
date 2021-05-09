@@ -23,6 +23,8 @@ using namespace std;
 DWORD WINAPI enter_text_interface(LPVOID param) {
 	ControlMain* control_main = (ControlMain*)param;
 
+	bool accept_state = true;
+
 	while (!control_main->exit) {
 
 		tcout << _T("Menu -------------\n");
@@ -50,6 +52,20 @@ DWORD WINAPI enter_text_interface(LPVOID param) {
 				tcout << _T("Invalid Syntax -> new_airport <name> <posX> <posY>\n");
 			}
 		} else if (command == _T("accept")) { // WTF -> Suspender / ativar a aceitação de novos aviões por parte dos utilizadores.
+			HANDLE mutex = control_main->plane_entering_lock;
+
+			if (accept_state) {
+				DWORD result = WaitForSingleObject(mutex, 2000);
+				if (result != WAIT_OBJECT_0) {
+					tcout << _T("Something went wrong locking plane entering");
+					continue;
+				}
+				tcout << _T("Planes can now not enter") << endl;
+			} else {
+				ReleaseMutex(mutex);
+				tcout << _T("Planes can enter again") << endl;
+			}
+			accept_state = !accept_state;
 
 		} else if (command == _T("list")) {
 			if (input_parts.size() == 2) {
