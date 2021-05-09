@@ -44,9 +44,6 @@
     <ClInclude Include="..\EspacoAereo\CircularBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\EspacoAereo\SharedStructContents.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\EspacoAereo\Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -54,6 +51,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PlaneFunctions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\EspacoAereo\SharedStructContents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

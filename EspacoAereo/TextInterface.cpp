@@ -79,12 +79,27 @@ DWORD WINAPI enter_text_interface(LPVOID param) {
 
 						for (Plane* plane : airport->planes) {
 
-							tcout << _T("\tPlane -> offset : ") << plane->offset << _T(", max passangers : ") << plane->max_passengers << _T(", passagers : ") << endl;
-							//TODO put passengers
+							tcout << _T("\tPlane -> offset : ") << plane->offset <<
+								_T(", max capacity : ") << plane->max_passengers <<
+								_T(", passagers : ") << "   " << //TODO put passengers
+								_T(", velocity : ") << plane->velocity << endl;
+							
+							
 						}
 					}
 				} else if (type == _T("planes")) {
-					//TODO todo this todo fast
+					for(int i = 0 ;i < control_main->shared_control->max_plane_amount;i++)
+					{
+						const Plane& plane = control_main->planes[i];
+						if(plane.in_use)
+						{
+							tcout << _T("\tPlane -> offset : ") << plane.offset <<
+								_T(" , max passangers : ") << plane.max_passengers <<
+								_T(" , velocity : ") << plane.velocity <<
+								_T(", passagers : ") << "   " << //TODO put passengers
+								_T(" , airport: ") << control_main->get_airport(plane.origin_airport_id)->name << endl;
+						}
+					}
 				} else if (type == _T("passengers")) {
 
 				}
