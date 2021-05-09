@@ -61,7 +61,7 @@ int _tmain(int argc, TCHAR** argv) {
 	if (shared_mem_pointer == NULL) {
 		return -1;
 	}
-
+	//------------------------------------------------------------------------------------
 
 	ControlMain* control_main = nullptr;
 	{
@@ -74,15 +74,36 @@ int _tmain(int argc, TCHAR** argv) {
 
 		memset(control_main->shared_control->map, MAP_EMPTY, sizeof(control_main->shared_control->map));
 	}
+	
 
-
+	// Start all threads -----------------------------------------------------------------
 	control_main->receiving_thread = create_thread(receive_updates, control_main);
 	control_main->heartbeat_thread = create_thread(heartbeat_checker, control_main);
+	control_main->interface_thread = create_thread(enter_text_interface, control_main);
+	//------------------------------------------------------------------------------------
 
 
-	enter_text_interface(control_main);
+	// Wait for them to finish -----------------------------------------------------------
+	const int handle_amount = 3;
+	HANDLE handles[] = { control_main->receiving_thread ,control_main->heartbeat_thread ,control_main->interface_thread };
+	WaitForMultipleObjects(handle_amount, handles, true, INFINITE);
+	//------------------------------------------------------------------------------------
 
-	exit_everything(control_main);
+	
+	//Exiting ----------------------------------------------------------------------------
+	tcout << _T("Exiting\n-----------------------------");
+
+	for (int i = 0; i < control_main->shared_control->max_plane_amount; ++i) {
+		if (control_main->planes[i].in_use) {
+			CircularBuffer* buffer = control_main->get_plane_buffer(i);
+
+			PlaneControlMessage message;
+			message.type = TYPE_CONTROL_EXITING;
+			buffer->set_next_element(message);
+		}
+	}
+	delete(control_main);
+	//------------------------------------------------------------------------------------
 
 	//TODO Pode assumir que existe um número máximo tanto de aeroportos como de aviões. 
 	// Estas quantidades deverão estar definidas no Registry.Quando os valores máximos são atingidos, os

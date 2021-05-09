@@ -4,6 +4,8 @@
 #include <iostream>
 #include <vector>
 #include <string>
+
+#include "ControlFunctions.h"
 #include "Utils.h"
 
 using namespace std;
@@ -18,7 +20,8 @@ using namespace std;
 #define tcin cin
 #endif
 
-void enter_text_interface(ControlMain* control_main) {
+DWORD WINAPI enter_text_interface(LPVOID param) {
+	ControlMain* control_main = (ControlMain*)param;
 
 	while (!control_main->exit) {
 
@@ -74,9 +77,11 @@ void enter_text_interface(ControlMain* control_main) {
 				tcout << _T("Invalid Syntax -> list (airports|planes|passengers)\n");
 			}
 		} else if (command == _T("exit")) {
-			control_main->exit = true;
+			exit_everything(control_main);
 		} else {
 			tcout << _T("Invalid Syntax -> new_airport|accept|list\n Introduced -> ") << input << endl;
 		}
 	}
+
+	return 0;
 }

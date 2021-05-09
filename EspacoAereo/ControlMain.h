@@ -26,6 +26,7 @@ public:
 	HANDLE receiving_thread;
 	HANDLE heartbeat_thread;
 	HANDLE interface_thread;
+	HANDLE shutdown_event;
 	// --------------------------------
 
 

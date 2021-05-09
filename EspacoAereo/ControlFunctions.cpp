@@ -118,6 +118,11 @@ DWORD WINAPI receive_updates(LPVOID param) {
 
 			//TODO tell the people to shtudown
 			break;
+
+		}case TYPE_CONTROL_EXITING: {
+			// no need to do anything, just here to not go to the default
+			break;
+				
 		}default:
 			tcout << _T("Invalid type received from planes : ") << message.plane_offset << endl;
 		}
@@ -127,23 +132,14 @@ DWORD WINAPI receive_updates(LPVOID param) {
 
 void exit_everything(ControlMain* control_main) {
 
-	tcout << _T("Exiting\n-----------------------------");
+	control_main->exit = true;
 
-	for (int i = 0; i < control_main->shared_control->max_plane_amount; ++i) {
-		Plane* current_plane = &control_main->planes[i];
-		if (current_plane->in_use) {
+	SetEvent(control_main->shutdown_event);
 
-			CircularBuffer* buffer = control_main->get_plane_buffer(i);
-
-			PlaneControlMessage message;
-			message.type = TYPE_CONTROL_EXITING;
-			buffer->set_next_element(message);
-		}
-	}
-	
-	delete(control_main);
-	
-	exit(0);
+	PlaneControlMessage message;
+	message.plane_offset = 0;
+	message.type = TYPE_CONTROL_EXITING;
+	control_main->receiving_buffer->set_next_element(message);
 }
 
 DWORD WINAPI heartbeat_checker(LPVOID param) {
@@ -152,7 +148,10 @@ DWORD WINAPI heartbeat_checker(LPVOID param) {
 
 	while (!control->exit) {
 
-		Sleep(HEARTBEAT_TIME_CONTROL);
+		const DWORD result = WaitForSingleObject(control->shutdown_event, HEARTBEAT_TIME_CONTROL);
+		if (result != WAIT_TIMEOUT)
+			break;
+
 
 		for (int i = 0; i < control->shared_control->max_plane_amount; ++i) {
 			Plane* plane = control->get_plane(i);

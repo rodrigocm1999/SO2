@@ -12,11 +12,13 @@ ControlMain::ControlMain(SharedControl* shared_control, Plane* planes, HANDLE ha
 
 	buffer_planes = new CircularBuffer * [shared_control->max_plane_amount];
 	ZeroMemory(buffer_planes, sizeof(CircularBuffer*) * shared_control->max_plane_amount);
+
+	shutdown_event = CreateEvent(nullptr, true, false, nullptr);
 }
 
 ControlMain::~ControlMain() {
 	delete(receiving_buffer);
-	
+
 	for (int i = 0; i < shared_control->max_plane_amount; ++i) {
 		if (buffer_planes[i] != nullptr)
 			delete(buffer_planes[i]);
@@ -43,7 +45,7 @@ bool ControlMain::add_airport(const TCHAR* name, int x, int y) {
 		if (airport->name == name || airport->position.x == x && airport->position.y == y)
 			return false;
 
-		if(grid_distance(airport->position, position) <= MINIMUM_AIRPORT_GRID_DISTANCE)
+		if (grid_distance(airport->position, position) <= MINIMUM_AIRPORT_GRID_DISTANCE)
 			return  false;
 	}
 

@@ -3,4 +3,4 @@
 #include "ControlMain.h"
 
 
-void enter_text_interface(ControlMain* control_main);
+DWORD WINAPI enter_text_interface(LPVOID param);
