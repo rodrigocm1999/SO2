@@ -51,7 +51,7 @@ DWORD WINAPI enter_text_interface(LPVOID param) {
 			} else {
 				tcout << _T("Invalid Syntax -> new_airport <name> <posX> <posY>\n");
 			}
-		} else if (command == _T("accept")) { // WTF -> Suspender / ativar a aceitação de novos aviões por parte dos utilizadores.
+		} else if (command == _T("accept")) {
 			HANDLE mutex = control_main->plane_entering_lock;
 
 			if (accept_state) {
@@ -83,16 +83,13 @@ DWORD WINAPI enter_text_interface(LPVOID param) {
 								_T(", max capacity : ") << plane->max_passengers <<
 								_T(", passagers : ") << "   " << //TODO put passengers
 								_T(", velocity : ") << plane->velocity << endl;
-							
-							
 						}
 					}
 				} else if (type == _T("planes")) {
-					for(int i = 0 ;i < control_main->shared_control->max_plane_amount;i++)
-					{
+					for (int i = 0; i < control_main->shared_control->max_plane_amount; i++) {
 						const Plane& plane = control_main->planes[i];
-						if(plane.in_use)
-						{
+						
+						if (plane.in_use) {
 							tcout << _T("\tPlane -> offset : ") << plane.offset <<
 								_T(" , max passangers : ") << plane.max_passengers <<
 								_T(" , velocity : ") << plane.velocity <<

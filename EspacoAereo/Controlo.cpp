@@ -105,21 +105,7 @@ int _tmain(int argc, TCHAR** argv) {
 	delete(control_main);
 	//------------------------------------------------------------------------------------
 
-	//TODO Pode assumir que existe um número máximo tanto de aeroportos como de aviões. 
-	// Estas quantidades deverão estar definidas no Registry.Quando os valores máximos são atingidos, os
-	// novos aviões que se tentem ligar ao sistema serão ignorados até que este tenha espaço para eles.
 
 	//TODO Interface com utilizador: interface gráfica Win32 que apresenta todo o espaço aéreo e os seus elementos. Os 
 	//	aeroportos e os aviões são representados graficamente de forma distinta.Esta informação estará permanentemente visível e sempre atualizada
-	//		
-	//		TODO Numa versão inicial (Meta 1) será aceite uma versão simplificada da interface segundo o 
-	//			paradigma consola.Não é para desenhar uma matriz, mas sim para apresentar mensagens de texto tais como “avião ID na posição x, y”.
-
-	//TODO O controlador aéreo considerará que um avião que não dá sinal de vida durante 3 segundos deixou de existir
-	//	quer esteja em voo ou parado no aeroporto.O avião é identificado perante o controlador aéreo através do seu ID de processo
-
-	//TODO Comandos:
-	//	Encerrar todo o sistema (todas as aplicações são notificadas).
-	//	Suspender / ativar a aceitação de novos aviões por parte dos utilizadores.
-	//	Listar todos os aeroportos, aviões e passageiros existentes no sistema(com os detalhes de cada um, por	exemplo, destino, no caso dos passageiros).
 }
