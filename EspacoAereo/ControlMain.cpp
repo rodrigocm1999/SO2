@@ -33,6 +33,7 @@ ControlMain::~ControlMain() {
 	UnmapViewOfFile(shared_control);
 	CloseHandle(handle_mapped_file);
 	CloseHandle(heartbeat_thread);
+	CloseHandle(shutdown_event);
 }
 
 bool ControlMain::add_airport(const TCHAR* name, int x, int y) {

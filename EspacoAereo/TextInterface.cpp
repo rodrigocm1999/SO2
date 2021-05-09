@@ -68,7 +68,7 @@ DWORD WINAPI enter_text_interface(LPVOID param) {
 						}
 					}
 				} else if (type == _T("planes")) {
-
+					//TODO todo this todo fast
 				} else if (type == _T("passengers")) {
 
 				}
