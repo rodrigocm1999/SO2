@@ -16,15 +16,15 @@ CircularBuffer::CircularBuffer(CircBuffer* data, int mutex_number) {
 	tstringstream stream;
 	stream << mutex_number;
 	TSTRING prefix = stream.str();
-	
+
 	mutex_get = CreateMutex(nullptr, FALSE, (prefix + MUTEX_GET).c_str());
 	mutex_set = CreateMutex(nullptr, FALSE, (prefix + MUTEX_SET).c_str());
 	mutex_empty_spot = CreateSemaphore(nullptr, CIRC_BUFFER_SIZE, CIRC_BUFFER_SIZE, (prefix + MUTEX_EMPTY_SPOT).c_str());
 	mutex_available_item = CreateSemaphore(nullptr, 0, CIRC_BUFFER_SIZE, (prefix + MUTEX_AVAILABLE_ITEM).c_str());
 
-	
+
 	if (mutex_get == nullptr || mutex_set == nullptr || mutex_empty_spot == nullptr || mutex_available_item == nullptr) {
-		printf("CreateMutex error: %lu\n", GetLastError());
+		_tprintf(_T("CreateMutex error: %lu\n"), GetLastError());
 		throw std::exception();
 	}
 
