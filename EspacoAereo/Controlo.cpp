@@ -48,6 +48,7 @@ int _tmain(int argc, TCHAR** argv) {
 	HANDLE planes_semaphore = CreateSemaphoreW(nullptr, max_planes, max_planes, SEMAPHORE_MAX_PLANES);
 	if (planes_semaphore == nullptr) {
 		tcout << _T("Semaphore already exists -> ") << GetLastError() << endl;
+		CloseHandle(process_lock_mutex);
 		return -1;
 	}
 	// -----------------------------------------------------------------------
@@ -59,6 +60,8 @@ int _tmain(int argc, TCHAR** argv) {
 	HANDLE handle_mapped_file;
 	void* shared_mem_pointer = allocate_shared_memory(handle_mapped_file, shared_memory_size);
 	if (shared_mem_pointer == NULL) {
+		CloseHandle(process_lock_mutex);
+		CloseHandle(planes_semaphore);
 		return -1;
 	}
 	//------------------------------------------------------------------------------------
@@ -105,6 +108,7 @@ int _tmain(int argc, TCHAR** argv) {
 	delete(control_main);
 	//------------------------------------------------------------------------------------
 
+	CloseHandle(process_lock_mutex);
 
 	//TODO Interface com utilizador: interface gráfica Win32 que apresenta todo o espaço aéreo e os seus elementos. Os 
 	//	aeroportos e os aviões são representados graficamente de forma distinta.Esta informação estará permanentemente visível e sempre atualizada
