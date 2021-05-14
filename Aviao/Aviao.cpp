@@ -15,14 +15,6 @@ using namespace std;
 
 #define TSTRING std::basic_string<TCHAR>
 
-#ifdef UNICODE
-#define tcout std::wcout
-#define tcin std::wcin
-#else
-#define tcout std::cout
-#define tcin std::cin
-#endif
-
 
 int _tmain(int argc, TCHAR** argv) {
 

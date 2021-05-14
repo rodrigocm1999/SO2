@@ -9,12 +9,6 @@
 
 using namespace std;
 
-#ifdef UNICODE
-#define tcout std::wcout
-#else
-#define tcout std::cout
-#endif
-
 #define PLANE_ARRIVED 0
 #define PLANE_MOVED 1
 

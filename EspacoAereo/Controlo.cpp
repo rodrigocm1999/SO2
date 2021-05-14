@@ -34,6 +34,10 @@ int _tmain(int argc, TCHAR** argv) {
 	HANDLE process_lock_mutex = CreateMutexW(0, FALSE, _T("Airport_Control"));
 	// Tries to create a mutex with the specified name
 	// If the application is already running it cant create another mutex with the same name
+	if (process_lock_mutex == nullptr) {
+		tcout << _T("Process lock mutex error creating : ") << GetLastError() << endl;
+		return -1;
+	}
 	if (GetLastError() == ERROR_ALREADY_EXISTS) {
 		tcout << _T("Process already running\n");
 		return -1;
@@ -77,7 +81,7 @@ int _tmain(int argc, TCHAR** argv) {
 
 		memset(control_main->shared_control->map, MAP_EMPTY, sizeof(control_main->shared_control->map));
 	}
-	
+
 
 	// Start all threads -----------------------------------------------------------------
 	control_main->receiving_thread = create_thread(receive_updates, control_main);
@@ -92,7 +96,7 @@ int _tmain(int argc, TCHAR** argv) {
 	WaitForMultipleObjects(handle_amount, handles, true, INFINITE);
 	//------------------------------------------------------------------------------------
 
-	
+
 	//Exiting ----------------------------------------------------------------------------
 	tcout << _T("Exiting\n-----------------------------");
 

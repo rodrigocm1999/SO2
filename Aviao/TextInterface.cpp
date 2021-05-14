@@ -72,7 +72,7 @@ void destiny_command(PlaneMain* plane_main, vector<TSTRING> input_parts) {
 	}
 
 	TSTRING destiny = input_parts[1];
-	const int destiny_bytes = sizeof(TCHAR) * (destiny.size() + 1);
+	const size_t destiny_bytes = sizeof(TCHAR) * (destiny.size() + 1);
 
 	auto message = ready_message(plane_main, TYPE_NEXT_DESTINY);
 	memcpy(message.data.airport_name, destiny.c_str(), destiny_bytes);
