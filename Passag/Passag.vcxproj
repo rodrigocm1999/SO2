@@ -142,6 +142,10 @@
   <ItemGroup>
     <ClCompile Include="Passag.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\EspacoAereo\SharedPassagStruct.h" />
+    <ClInclude Include="..\EspacoAereo\SharedStructContents.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

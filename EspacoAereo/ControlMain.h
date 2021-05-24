@@ -32,6 +32,7 @@ public:
 	HANDLE interface_thread;
 	HANDLE shutdown_event;
 	HANDLE plane_entering_lock;
+	HANDLE passenger_receiver;
 	
 
 	ControlMain(SharedControl* shared_control, Plane* planes, HANDLE handle_mapped_file, HANDLE handle_control_named_pipe);

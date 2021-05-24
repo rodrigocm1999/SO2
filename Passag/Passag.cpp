@@ -5,7 +5,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include "SharedStructContents.h"
+
 #include "SharedPassagStruct.h"
 
 using namespace std;
@@ -29,40 +29,68 @@ int _tmain(int argc, TCHAR** argv) {
 	val = _setmode(_fileno(stderr), _O_WTEXT);
 #endif
 
+	if (argc < 4) {
+		tcout << _T("Invalid Arguments : person_name origin_port destiny_port (optional)max_wait_time_seconds") << endl;
+		return -1;
+	}
 
-	TSTRING origin_port = argv[1];
-	TSTRING destiny_port = argv[2];
-	TSTRING person_name = argv[3];
+	TSTRING person_name = argv[1];
+	TSTRING origin_port = argv[2];
+	TSTRING destiny_port = argv[3];
 	int max_waiting_time_in_seconds = -1;
 	if (argc > 4) {
 		max_waiting_time_in_seconds = _ttoi(argv[4]);
 	}
 
-	TSTRING pipe_name;
+	DWORD process_id = GetProcessId(GetCurrentProcess());
+
+	TSTRING pipe_name(_T("\\\\.\\pipe\\"));
 	{
 		tstringstream oss;
-		oss << GetProcessId(GetCurrentProcess());
-		pipe_name = oss.str();
+		oss << process_id;
+		pipe_name.append(oss.str());
 	}
 
-	HANDLE passenger_named_pipe = CreateNamedPipe(pipe_name.c_str(), PIPE_ACCESS_INBOUND,
-												  PIPE_WAIT | PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE,
-												  1, 0, sizeof(PassagControlMessage), 1000, nullptr);
-	if (passenger_named_pipe == nullptr) {
+	const HANDLE passenger_named_pipe = CreateNamedPipe(pipe_name.c_str(), PIPE_ACCESS_INBOUND,
+														PIPE_WAIT | PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE,
+														1, 0, sizeof(PassagControlMessage), 1000, nullptr);
+	if (passenger_named_pipe == INVALID_HANDLE_VALUE) {
 		tcout << _T("Error creating named pipe -> ") << GetLastError() << endl;
 		return -1;
 	}
 
-	HANDLE control_named_pipe = CreateFile(CONTROL_PIPE_MAIN, GENERIC_READ, 0, NULL,
-										   OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-	if (control_named_pipe == nullptr) {
+	const HANDLE control_named_pipe = CreateFile(CONTROL_PIPE_MAIN, GENERIC_READ, 0, 0,
+												 OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+	if (control_named_pipe == INVALID_HANDLE_VALUE) {
 		tcout << _T("Error opening control named pipe -> ") << GetLastError() << endl;
 		CloseHandle(passenger_named_pipe);
 		return -1;
 	}
 
+	PassagControlMessage message;
+	message.id = process_id;
+	message.type = PASSENGER_TYPE_NEW_PASSENGER;
+	memcpy(message.data.where_to.name, person_name.c_str(), person_name.size() * sizeof(TCHAR));
+	memcpy(message.data.where_to.origin, origin_port.c_str(), origin_port.size() * sizeof(TCHAR));
+	memcpy(message.data.where_to.destiny, destiny_port.c_str(), destiny_port.size() * sizeof(TCHAR));
 
+	DWORD bytes_written;
+	WriteFile(control_named_pipe, &message, sizeof(message), &bytes_written, nullptr);
+
+
+	//TODO the menu thing part stuff
+
+
+	TSTRING asd;
+	tcin >> asd;
+
+
+	if (!DisconnectNamedPipe(control_named_pipe)) {
+		tcout << _T("Error closing the control named pipe -> ") << GetLastError() << endl;
+	}
+	if (!DisconnectNamedPipe(passenger_named_pipe)) {
+		tcout << _T("Error closing the passenger named pipe -> ") << GetLastError() << endl;
+	}
 
 	//TODO Funcionamento: 
 	//	O passageiro é atribuído ao aeroporto origem, ficando a aguardar que exista um avião disponível para o aeroporto destino. 

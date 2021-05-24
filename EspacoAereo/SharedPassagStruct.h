@@ -1,6 +1,10 @@
 #pragma once
+
 #include "SharedStructContents.h"
 
+#define CONTROL_PIPE_MAIN _T("\\\\.\\pipe\\CONTROL_PIPE_MAIN")
+
+#define PASSENGER_TYPE_NEW_PASSENGER 1
 
 struct WhereTo {
 	TCHAR origin[BUFFER_SIZE];
@@ -14,6 +18,7 @@ union PassagControlData {
 
 
 typedef struct {
-	
+	unsigned int id;
+	int type;
 	union PassagControlData data;
 }PassagControlMessage;

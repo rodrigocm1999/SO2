@@ -59,9 +59,9 @@ int _tmain(int argc, TCHAR** argv) {
 	// -----------------------------------------------------------------------
 
 	//Create Pipe to receive new passangers ----------------------------------
-	HANDLE handle_control_named_pipe = CreateNamedPipe(CONTROL_PIPE_MAIN, PIPE_ACCESS_INBOUND,
-													   PIPE_WAIT | PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE,
-													   1, 0, sizeof(PassagControlMessage), 1000, NULL);
+	const HANDLE handle_control_named_pipe = CreateNamedPipe(CONTROL_PIPE_MAIN, PIPE_ACCESS_INBOUND,
+															 PIPE_WAIT | PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE,
+															 1, 0, sizeof(PassagControlMessage), 1000, NULL);
 	if (handle_control_named_pipe == INVALID_HANDLE_VALUE) {
 		tcout << _T("Error creating named pipe -> ") << GetLastError() << endl;
 		CloseHandle(planes_semaphore);
@@ -83,7 +83,7 @@ int _tmain(int argc, TCHAR** argv) {
 	}
 	//------------------------------------------------------------------------------------
 
-	ControlMain* control_main = nullptr;
+	ControlMain* control_main;
 	{
 		SharedControl* shared_control = (SharedControl*)shared_mem_pointer;
 		Plane* planes_start = (Plane*)&shared_control[1];
@@ -97,6 +97,7 @@ int _tmain(int argc, TCHAR** argv) {
 
 
 	// Start all threads -----------------------------------------------------------------
+	control_main->passenger_receiver = create_thread(passenger_piper_receiver, control_main);
 	control_main->receiving_thread = create_thread(receive_updates, control_main);
 	control_main->heartbeat_thread = create_thread(heartbeat_checker, control_main);
 	control_main->interface_thread = create_thread(enter_text_interface, control_main);

@@ -5,10 +5,8 @@
 using namespace std;
 
 ControlMain::ControlMain(SharedControl* shared_control, Plane* planes, HANDLE handle_mapped_file, HANDLE handle_control_named_pipe) :
-	shared_control(shared_control),
-	planes(planes),
-	handle_mapped_file(handle_mapped_file),
-	handle_control_named_pipe(handle_control_named_pipe),
+	shared_control(shared_control), planes(planes),
+	handle_mapped_file(handle_mapped_file), handle_control_named_pipe(handle_control_named_pipe),
 	receiving_buffer(new CircularBuffer(&shared_control->circular_buffer, CONTROL_MUTEX_PREFIX)) {
 
 	buffer_planes = new CircularBuffer * [shared_control->max_plane_amount];
@@ -38,6 +36,7 @@ ControlMain::~ControlMain() {
 	CloseHandle(heartbeat_thread);
 	CloseHandle(shutdown_event);
 	CloseHandle(plane_entering_lock);
+	DisconnectNamedPipe(handle_control_named_pipe);
 }
 
 bool ControlMain::add_airport(const TCHAR* name, int x, int y) {
