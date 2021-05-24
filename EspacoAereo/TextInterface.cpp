@@ -72,7 +72,7 @@ DWORD WINAPI enter_text_interface(LPVOID param) {
 				TSTRING type = input_parts[1];
 
 				if (type == _T("airports")) {
-					for (pair<const int, Airport*> pair : control_main->airports) {
+					for (auto pair : control_main->airports) {
 						Airport* airport = pair.second;
 
 						tcout << _T("Airport -> name : ") << airport->name << _T("\tposition : ") << airport->position.x << _T(", ") << airport->position.y << endl;

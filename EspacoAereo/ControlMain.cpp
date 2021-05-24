@@ -4,10 +4,11 @@
 
 using namespace std;
 
-ControlMain::ControlMain(SharedControl* shared_control, Plane* planes, HANDLE handle_mapped_file) :
+ControlMain::ControlMain(SharedControl* shared_control, Plane* planes, HANDLE handle_mapped_file, HANDLE handle_control_named_pipe) :
 	shared_control(shared_control),
 	planes(planes),
 	handle_mapped_file(handle_mapped_file),
+	handle_control_named_pipe(handle_control_named_pipe),
 	receiving_buffer(new CircularBuffer(&shared_control->circular_buffer, CONTROL_MUTEX_PREFIX)) {
 
 	buffer_planes = new CircularBuffer * [shared_control->max_plane_amount];
@@ -15,7 +16,7 @@ ControlMain::ControlMain(SharedControl* shared_control, Plane* planes, HANDLE ha
 
 	shutdown_event = CreateEvent(nullptr, true, false, nullptr);
 
-	plane_entering_lock = CreateMutex(nullptr,FALSE, PLANE_LOCK_MUTEX);
+	plane_entering_lock = CreateMutex(nullptr, FALSE, PLANE_LOCK_MUTEX);
 }
 
 ControlMain::~ControlMain() {
@@ -28,7 +29,7 @@ ControlMain::~ControlMain() {
 	delete(buffer_planes);
 
 	for (auto pair : this->airports) {
-		delete(pair.second);
+		delete pair.second;
 	}
 
 	CloseHandle(receiving_thread);
@@ -44,7 +45,7 @@ bool ControlMain::add_airport(const TCHAR* name, int x, int y) {
 	position.x = x;
 	position.y = y;
 
-	for (pair<const int, Airport*> pair : this->airports) {
+	for (auto pair : this->airports) {
 		Airport* airport = pair.second;
 		if (airport->name == name || airport->position.x == x && airport->position.y == y)
 			return false;
@@ -62,8 +63,8 @@ bool ControlMain::add_airport(const TCHAR* name, int x, int y) {
 	return true;
 }
 
-Airport* ControlMain::get_airport(const std::basic_string<TCHAR> name) {
-	for (pair<const int, Airport*> pair : this->airports)
+Airport* ControlMain::get_airport(const TSTRING& name) {
+	for (auto pair : this->airports)
 		if (pair.second->name == name)
 			return pair.second;
 	return nullptr;

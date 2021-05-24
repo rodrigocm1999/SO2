@@ -157,6 +157,7 @@
     <ClInclude Include="ControlMain.h" />
     <ClInclude Include="RegistryStuff.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="SharedPassagStruct.h" />
     <ClInclude Include="SharedStructContents.h" />
     <ClInclude Include="TextInterface.h" />
     <ClInclude Include="Utils.h" />

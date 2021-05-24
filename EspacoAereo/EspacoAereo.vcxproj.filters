@@ -68,5 +68,8 @@
     <ClInclude Include="ControlFunctions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SharedPassagStruct.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

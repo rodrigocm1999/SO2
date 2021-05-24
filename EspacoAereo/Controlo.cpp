@@ -9,6 +9,7 @@
 #include "Controlo.h"
 #include "Utils.h"
 #include "SharedStructContents.h"
+#include "SharedPassagStruct.h"
 #include "TextInterface.h"
 #include "ControlMain.h"
 #include "ControlFunctions.h"
@@ -57,6 +58,17 @@ int _tmain(int argc, TCHAR** argv) {
 	}
 	// -----------------------------------------------------------------------
 
+	//Create Pipe to receive new passangers ----------------------------------
+	HANDLE handle_control_named_pipe = CreateNamedPipe(CONTROL_PIPE_MAIN, PIPE_ACCESS_INBOUND,
+													   PIPE_WAIT | PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE,
+													   1, 0, sizeof(PassagControlMessage), 1000, NULL);
+	if (handle_control_named_pipe == INVALID_HANDLE_VALUE) {
+		tcout << _T("Error creating named pipe -> ") << GetLastError() << endl;
+		CloseHandle(planes_semaphore);
+		CloseHandle(process_lock_mutex);
+		exit(-1);
+	}
+	// -----------------------------------------------------------------------
 
 	//Create Shared Memory ---------------------------------------------------
 	const DWORD shared_memory_size = sizeof(SharedControl) + sizeof(Plane) * max_planes; //Soma do espaço necessário a alocar
@@ -66,6 +78,7 @@ int _tmain(int argc, TCHAR** argv) {
 	if (shared_mem_pointer == NULL) {
 		CloseHandle(process_lock_mutex);
 		CloseHandle(planes_semaphore);
+		CloseHandle(handle_control_named_pipe);
 		return -1;
 	}
 	//------------------------------------------------------------------------------------
@@ -77,7 +90,7 @@ int _tmain(int argc, TCHAR** argv) {
 
 
 		shared_control->max_plane_amount = max_planes;
-		control_main = new ControlMain(shared_control, planes_start, handle_mapped_file);
+		control_main = new ControlMain(shared_control, planes_start, handle_mapped_file, handle_control_named_pipe);
 
 		memset(control_main->shared_control->map, MAP_EMPTY, sizeof(control_main->shared_control->map));
 	}
