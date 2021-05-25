@@ -39,6 +39,9 @@
     <ClCompile Include="TextInterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Passenger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Airport.h">
@@ -56,9 +59,6 @@
     <ClInclude Include="CircularBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SharedStructContents.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="TextInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -69,6 +69,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SharedPassagStruct.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Passenger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SharedStructContents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

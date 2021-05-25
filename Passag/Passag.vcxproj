@@ -141,10 +141,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Passag.cpp" />
+    <ClCompile Include="PassengerFunction.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\EspacoAereo\SharedPassagStruct.h" />
     <ClInclude Include="..\EspacoAereo\SharedStructContents.h" />
+    <ClInclude Include="..\EspacoAereo\Utils.h" />
+    <ClInclude Include="PassengerFunction.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

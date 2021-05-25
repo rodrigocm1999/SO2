@@ -7,6 +7,9 @@
 #include <string>
 #include "RegistryStuff.h"
 #include "Controlo.h"
+
+#include <unordered_set>
+
 #include "Utils.h"
 #include "SharedStructContents.h"
 #include "SharedPassagStruct.h"
@@ -60,8 +63,8 @@ int _tmain(int argc, TCHAR** argv) {
 
 	//Create Pipe to receive new passangers ----------------------------------
 	const HANDLE handle_control_named_pipe = CreateNamedPipe(CONTROL_PIPE_MAIN, PIPE_ACCESS_INBOUND,
-															 PIPE_WAIT | PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE,
-															 1, 0, sizeof(PassagControlMessage), 1000, NULL);
+															 PIPE_WAIT | PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, PIPE_UNLIMITED_INSTANCES,
+															 0, sizeof(PassengerMessage), 1000, nullptr);
 	if (handle_control_named_pipe == INVALID_HANDLE_VALUE) {
 		tcout << _T("Error creating named pipe -> ") << GetLastError() << endl;
 		CloseHandle(planes_semaphore);
@@ -97,7 +100,7 @@ int _tmain(int argc, TCHAR** argv) {
 
 
 	// Start all threads -----------------------------------------------------------------
-	control_main->passenger_receiver = create_thread(passenger_piper_receiver, control_main);
+	control_main->passenger_receiver = create_thread(passenger_pipe_receiver, control_main);
 	control_main->receiving_thread = create_thread(receive_updates, control_main);
 	control_main->heartbeat_thread = create_thread(heartbeat_checker, control_main);
 	control_main->interface_thread = create_thread(enter_text_interface, control_main);
@@ -105,8 +108,9 @@ int _tmain(int argc, TCHAR** argv) {
 
 
 	// Wait for them to finish -----------------------------------------------------------
-	const int handle_amount = 3;
-	HANDLE handles[] = { control_main->receiving_thread ,control_main->heartbeat_thread ,control_main->interface_thread };
+	const int handle_amount = 4;
+	HANDLE handles[] = { control_main->receiving_thread ,control_main->heartbeat_thread ,
+		control_main->interface_thread,control_main->passenger_receiver };
 	WaitForMultipleObjects(handle_amount, handles, true, INFINITE);
 	//------------------------------------------------------------------------------------
 
@@ -114,16 +118,45 @@ int _tmain(int argc, TCHAR** argv) {
 	//Exiting ----------------------------------------------------------------------------
 	tcout << _T("Exiting\n-----------------------------");
 
+	PassengerMessage passenger_message;
+	passenger_message.type = PASSENGER_TYPE_PLANE_CRASHED;
+
+	unordered_set<Passenger*> already_left_passengers;
+
 	for (int i = 0; i < control_main->shared_control->max_plane_amount; ++i) {
-		if (control_main->planes[i].in_use) {
+		Plane* plane = &control_main->planes[i];
+		if (plane->in_use) {
 			CircularBuffer* buffer = control_main->get_plane_buffer(i);
 
 			PlaneControlMessage message;
 			message.type = TYPE_CONTROL_EXITING;
 			buffer->set_next_element(message);
+
+			// if Plane flying warn all passengers that it went down
+			if (plane->is_flying) {
+				vector<Passenger*>* passengers = control_main->flying_passengers_map[plane->offset];
+
+				for (Passenger* passenger : *passengers) {
+					if (passenger->send_message(passenger_message))
+						already_left_passengers.insert(passenger);
+				}
+			}
 		}
 	}
-	delete(control_main);
+	//TODO its getting stuck right now around here
+	passenger_message.type = PASSENGER_TYPE_CONTROL_EXITING;
+	// Tell Passengers to leave, if they haven't left yet
+	for (Passenger* passenger : control_main->all_passengers) {
+		if (already_left_passengers.count(passenger) != 0)
+			continue;
+
+		if (!passenger->send_message(passenger_message))
+			tcout << _T("Error Telling passenger to leave, id -> ") << passenger->id << endl;
+	}
+
+
+
+	delete control_main;
 	//------------------------------------------------------------------------------------
 
 	CloseHandle(process_lock_mutex);

@@ -15,10 +15,12 @@ public:
 	bool exit = false;
 
 	unsigned int airport_counter = 0;
-	std::unordered_map<unsigned int, Airport*> airports;
+	std::unordered_map<AIRPORT_ID, Airport*> airports;
 
-	std::unordered_map<unsigned char, std::vector<Passenger*>> flying_passengers_map; // key = plane offset , value = all passengers
+	std::unordered_map<PLANE_ID, std::vector<Passenger*>*> flying_passengers_map; // key = plane offset , value = all passengers
 
+	std::vector<Passenger*> all_passengers;
+	
 	CircularBuffer* const receiving_buffer;
 
 	// points directly to shared memory
@@ -40,10 +42,12 @@ public:
 
 	bool add_airport(const TCHAR* name, int x, int y);
 	Airport* get_airport(const TSTRING& name);
-	Airport* get_airport(unsigned int id);
-	void plane_left_airport(unsigned char plane_offset);
-	Plane* get_plane(unsigned char plane_offset);
+	Airport* get_airport(AIRPORT_ID id);
+	void plane_left_airport(PLANE_ID plane_offset);
+	Plane* get_plane(PLANE_ID plane_offset);
 
-	CircularBuffer* get_plane_buffer(int offset);
+	bool add_passenger(Passenger* passenger);
 
+	CircularBuffer* get_plane_buffer(PLANE_ID offset) const;
+	void board_people(PLANE_ID plane_offset, AIRPORT_ID origin_airport_id, AIRPORT_ID destiny_airport_id);
 };

@@ -7,6 +7,7 @@
 #include <string>
 
 #include "SharedPassagStruct.h"
+#include "PassengerFunction.h"
 
 using namespace std;
 
@@ -21,6 +22,7 @@ using namespace std;
 #define tcin cin
 #define tstringstream stringstream
 #endif
+
 
 int _tmain(int argc, TCHAR** argv) {
 #ifdef UNICODE
@@ -44,7 +46,9 @@ int _tmain(int argc, TCHAR** argv) {
 
 	DWORD process_id = GetProcessId(GetCurrentProcess());
 
-	TSTRING pipe_name(_T("\\\\.\\pipe\\"));
+	tcout  <<_T("Process Id : ")  << process_id << endl;
+	
+	TSTRING pipe_name(PIPE_NAME_PREFIX);
 	{
 		tstringstream oss;
 		oss << process_id;
@@ -53,13 +57,14 @@ int _tmain(int argc, TCHAR** argv) {
 
 	const HANDLE passenger_named_pipe = CreateNamedPipe(pipe_name.c_str(), PIPE_ACCESS_INBOUND,
 														PIPE_WAIT | PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE,
-														1, 0, sizeof(PassagControlMessage), 1000, nullptr);
+														1, 0, sizeof(PassengerMessage), 1000, nullptr);
 	if (passenger_named_pipe == INVALID_HANDLE_VALUE) {
 		tcout << _T("Error creating named pipe -> ") << GetLastError() << endl;
 		return -1;
 	}
 
-	const HANDLE control_named_pipe = CreateFile(CONTROL_PIPE_MAIN, GENERIC_READ, 0, 0,
+
+	const HANDLE control_named_pipe = CreateFile(CONTROL_PIPE_MAIN, GENERIC_WRITE, 0, nullptr,
 												 OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (control_named_pipe == INVALID_HANDLE_VALUE) {
 		tcout << _T("Error opening control named pipe -> ") << GetLastError() << endl;
@@ -67,28 +72,44 @@ int _tmain(int argc, TCHAR** argv) {
 		return -1;
 	}
 
-	PassagControlMessage message;
+	PassengerMessage message;
 	message.id = process_id;
 	message.type = PASSENGER_TYPE_NEW_PASSENGER;
-	memcpy(message.data.where_to.name, person_name.c_str(), person_name.size() * sizeof(TCHAR));
-	memcpy(message.data.where_to.origin, origin_port.c_str(), origin_port.size() * sizeof(TCHAR));
-	memcpy(message.data.where_to.destiny, destiny_port.c_str(), destiny_port.size() * sizeof(TCHAR));
+	memcpy(message.data.new_passenger.name, person_name.c_str(), (person_name.size() + 1) * sizeof(TCHAR));
+	memcpy(message.data.new_passenger.origin, origin_port.c_str(), (origin_port.size() + 1) * sizeof(TCHAR));
+	memcpy(message.data.new_passenger.destiny, destiny_port.c_str(), (destiny_port.size() + 1) * sizeof(TCHAR));
 
 	DWORD bytes_written;
 	WriteFile(control_named_pipe, &message, sizeof(message), &bytes_written, nullptr);
 
+	if (!read_pipe(passenger_named_pipe, message)) {
+		tcout << _T("Error connecting to pipe reader -> ") << GetLastError() << endl;
+		CloseHandle(passenger_named_pipe);
+		CloseHandle(control_named_pipe);
+		exit(-1);
+	}
 
-	//TODO the menu thing part stuff
+	if (message.type == PASSENGER_TYPE_GOOD_AIRPORTS) {
+		tcout << _T("You are now waiting to be boarded on the plane") << endl;
+
+		//TODO max_waiting_time_in_seconds thread to wait for the shits
+		//create_thread();
+
+		receive_control_updates(passenger_named_pipe, destiny_port);
+
+	} else if (message.type == PASSENGER_TYPE_BAD_AIRPORTS) {
+		tcout << _T("Invalid airports!") << endl;
+	} else {
+		tcout << _T("Invalid Message from control! type -> ") << message.type << endl;
+	}
+
+	tcout << _T("Exiting...") << endl;
 
 
-	TSTRING asd;
-	tcin >> asd;
-
-
-	if (!DisconnectNamedPipe(control_named_pipe)) {
+	if (!CloseHandle(control_named_pipe)) {
 		tcout << _T("Error closing the control named pipe -> ") << GetLastError() << endl;
 	}
-	if (!DisconnectNamedPipe(passenger_named_pipe)) {
+	if (!CloseHandle(passenger_named_pipe)) {
 		tcout << _T("Error closing the passenger named pipe -> ") << GetLastError() << endl;
 	}
 
@@ -102,7 +123,4 @@ int _tmain(int argc, TCHAR** argv) {
 	//	O utilizador é automaticamente informado de quando embarca, da posição em que está quando está em voo, e quando chega
 	//	O utilizador pode sempre interagir com esta aplicação para a terminar. Se o fizer, considera - se que o passageiro deixou de existir
 
-
-	//TODO Comandos: 
-	//	Deve adicionar os comandos que considerar necessários para a utilização do programa tendo em vista a funcionalidade requerida
 }

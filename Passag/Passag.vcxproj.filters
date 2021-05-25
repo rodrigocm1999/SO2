@@ -18,12 +18,21 @@
     <ClCompile Include="Passag.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PassengerFunction.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\EspacoAereo\SharedPassagStruct.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\EspacoAereo\SharedStructContents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\EspacoAereo\Utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PassengerFunction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

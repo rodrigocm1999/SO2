@@ -50,9 +50,6 @@
 #define HEARTBEAT_TIME_CONTROL 3000L
 #define HEARTBEAT_TIME_PLANE 2000L
 
-#define AIRPORT_ID unsigned char
-#define PLANE_ID unsigned char
-
 
 typedef struct position {
 	int x;
@@ -66,7 +63,7 @@ typedef union { // check if needs more stuff to send
 }Data;
 
 typedef struct PlaneControlMessage {
-	PLANE_ID plane_offset;
+	unsigned char plane_offset;
 	int type;
 	Data data;
 }PlaneControlMessage;
@@ -86,7 +83,7 @@ typedef struct {
 }SharedControl;
 
 typedef struct {
-	PLANE_ID offset;
+	unsigned char offset;
 	int max_passengers;
 	unsigned char velocity;
 
@@ -97,8 +94,8 @@ typedef struct {
 	bool in_use;
 	bool heartbeat;
 
-	AIRPORT_ID origin_airport_id;
-	AIRPORT_ID destiny_airport_id;
+	unsigned int origin_airport_id;
+	unsigned int destiny_airport_id;
 
 	CircBuffer buffer;
 }Plane;

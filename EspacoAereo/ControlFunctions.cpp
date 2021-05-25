@@ -22,7 +22,8 @@ DWORD WINAPI receive_updates(LPVOID param) {
 		Plane* plane = &control->planes[plane_offset];
 
 		switch (message.type) {
-			case TYPE_NEW_PLANE: {
+			case TYPE_NEW_PLANE:
+			{
 				TSTRING airport_name = message.data.airport_name;
 
 				tcout << _T("New Plane -> ")
@@ -48,7 +49,8 @@ DWORD WINAPI receive_updates(LPVOID param) {
 				}
 				break;
 			}
-			case TYPE_NEXT_DESTINY: {
+			case TYPE_NEXT_DESTINY:
+			{
 				TSTRING airport_name = message.data.airport_name;
 
 				CircularBuffer* buffer = control->get_plane_buffer(plane_offset);
@@ -60,38 +62,52 @@ DWORD WINAPI receive_updates(LPVOID param) {
 					plane->destiny_airport_id = destiny->id;
 					buffer->set_next_element(message);
 
-					tcout << _T("Plane offset -> ") << plane_offset << _T(", changed destiny to : ") << airport_name << endl;
+					tcout << _T("Plane offset -> ") << plane_offset
+						<< _T(", changed destiny to : ") << airport_name << endl;
 
-					//TODO later change the peoples maybe
 				} else {
 					message.type = TYPE_PLANE_BAD_DESTINY;
 					buffer->set_next_element(message);
 				}
 				break;
 			}
-			case TYPE_START_TRIP: {
+			case TYPE_START_TRIP:
+			{
 				control->plane_left_airport(plane_offset);
 				tcout << _T("Plane offset -> ") << plane_offset << _T(", left the airport") << endl;
 				break;
 			}
 
-			case TYPE_PLANE_MOVED: {
+			case TYPE_PLANE_MOVED:
+			{
 				Position& position = message.data.position;
-				tcout << _T("Plane offset -> ") << plane->offset << _T(", moved to : ") << position.x << _T(",") << position.y << endl;
+				tcout << _T("Plane offset -> ") << plane->offset << _T(", moved to : ") << position.x << _T(",") <<
+					position.y << endl;
 				break;
 			}
 
-			case TYPE_TO_BOARD: {
+			case TYPE_TO_BOARD:
+			{
 				tcout << _T("Plane offset -> ") << plane->offset << _T(", boarding") << endl;
 				plane->flight_ready = false;
-				//TODO actually move the people
+
+				control->board_people(plane->offset, plane->origin_airport_id, plane->destiny_airport_id);
+
 				plane->flight_ready = true;
 				message.type = TYPE_PLANE_FINISHED_BOARDING;
 				CircularBuffer* buffer = control->get_plane_buffer(plane_offset);
+
+				for (auto passenger : *control->flying_passengers_map[plane_offset]) {
+
+
+
+				}
+
 				break;
 			}
 
-			case TYPE_PLANE_LEAVES: {
+			case TYPE_PLANE_LEAVES:
+			{
 				tcout << _T("Plane offset -> ") << plane->offset << _T(", left") << endl;
 
 				if (plane->origin_airport_id != NOT_DEFINED_AIRPORT) {
@@ -100,13 +116,15 @@ DWORD WINAPI receive_updates(LPVOID param) {
 				break;
 			}
 
-			case TYPE_PLANE_CRASHES: {
+			case TYPE_PLANE_CRASHES:
+			{
 				tcout << _T("Plane offset -> ") << plane->offset << _T(", crashed") << endl;
 				//TODO tell the people to shutdown
 				break;
 			}
 
-			case TYPE_FINISHED_TRIP: {
+			case TYPE_FINISHED_TRIP:
+			{
 				tcout << _T("Plane offset -> ") << plane->offset
 					<< _T(", arrived at : ") << control->get_airport(plane->destiny_airport_id)->name
 					<< _T(", from : ") << control->get_airport(plane->origin_airport_id)->name << endl;
@@ -119,12 +137,13 @@ DWORD WINAPI receive_updates(LPVOID param) {
 
 				//TODO tell the people to shtudown
 				break;
-
-			}case TYPE_CONTROL_EXITING: {
+			}
+			case TYPE_CONTROL_EXITING:
+			{
 				// no need to do anything, just here to not go to the default
 				break;
-
-			}default:
+			}
+			default:
 				tcout << _T("Invalid type received from planes : ") << message.plane_offset << endl;
 		}
 	}
@@ -132,7 +151,6 @@ DWORD WINAPI receive_updates(LPVOID param) {
 }
 
 void exit_everything(ControlMain* control_main) {
-
 	control_main->exit = true;
 
 	SetEvent(control_main->shutdown_event);
@@ -141,14 +159,14 @@ void exit_everything(ControlMain* control_main) {
 	message.plane_offset = 0;
 	message.type = TYPE_CONTROL_EXITING;
 	control_main->receiving_buffer->set_next_element(message);
+	
+	CancelSynchronousIo(control_main->passenger_receiver);
 }
 
 DWORD WINAPI heartbeat_checker(LPVOID param) {
-
 	ControlMain* control = (ControlMain*)param;
 
 	while (!control->exit) {
-
 		const DWORD result = WaitForSingleObject(control->shutdown_event, HEARTBEAT_TIME_CONTROL);
 		if (result != WAIT_TIMEOUT)
 			break;
@@ -158,13 +176,11 @@ DWORD WINAPI heartbeat_checker(LPVOID param) {
 			Plane* plane = control->get_plane(i);
 
 			if (plane->in_use) {
-
 				if (!plane->heartbeat) {
 					plane->in_use = false;
 					tcout << _T("Plane offset -> ") << i << _T(", disconnected") << endl;
 
 					if (plane->is_flying) {
-
 						PlaneControlMessage message;
 						message.plane_offset = i;
 						message.type = TYPE_PLANE_CRASHES;
@@ -172,12 +188,10 @@ DWORD WINAPI heartbeat_checker(LPVOID param) {
 
 						//TODO warn passengers if mid flight	
 					}
-
 				} else {
 					plane->heartbeat = false;
 				}
 			}
-
 		}
 	}
 
@@ -185,22 +199,65 @@ DWORD WINAPI heartbeat_checker(LPVOID param) {
 }
 
 
-DWORD WINAPI passenger_piper_receiver(LPVOID param) {
+DWORD WINAPI passenger_pipe_receiver(LPVOID param) {
 	ControlMain* control_main = (ControlMain*)param;
 	const HANDLE control_pipe = control_main->handle_control_named_pipe;
-
-	if (!ConnectNamedPipe(control_pipe, nullptr)) {
-		tcout << _T("Error connecting to pipe reader -> ") << GetLastError() << endl;
-		exit(-1);
-	}
-
+	DWORD bytesRead;
+	PassengerMessage message;
 
 	while (!control_main->exit) {
 
-		DWORD bytesRead;
-		PassagControlMessage message;
-		ReadFile(control_pipe, &message, sizeof(PassagControlMessage), &bytesRead, nullptr);
+		bool connected = ConnectNamedPipe(control_pipe, nullptr) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
 
+		if (!connected) {
+			tcout << _T("Error connecting to pipe reader -> ") << GetLastError() << endl;
+			exit_everything(control_main);
+		}
+
+		const bool result = ReadFile(control_pipe, &message, sizeof(PassengerMessage), &bytesRead, nullptr);
+		if (result == false) {
+			tcout << _T("Shouldnt happen ReadFile(control_pipe) -> ") << GetLastError() << endl;
+			if (GetLastError() == 109) {
+				tcout << _T("Pipe Error open") << endl;
+			}
+			DisconnectNamedPipe(control_pipe);
+			continue;
+		}
+
+		switch (message.type) {
+			case PASSENGER_TYPE_NEW_PASSENGER: {
+				Airport* origin = control_main->get_airport(message.data.new_passenger.origin);
+				Airport* destiny = control_main->get_airport(message.data.new_passenger.destiny);
+
+				Passenger* passenger = new Passenger(message.id, origin, destiny, message.data.new_passenger.name);
+
+				if (origin == nullptr || destiny == nullptr) {
+
+					if (!passenger->send_message(PASSENGER_TYPE_BAD_AIRPORTS))
+						tcout << _T("Error sending message to client") << endl;
+					delete passenger;
+					break;
+				}
+
+
+				if (passenger->send_message(PASSENGER_TYPE_GOOD_AIRPORTS)) {
+					tcout << _T("Received new passenger -> id : ") << message.id << _T("\tname : ") << message.data.new_passenger.name
+						<< _T("\torigin : ") << message.data.new_passenger.origin << _T("\tDestiny : ") << message.data.new_passenger.destiny << endl;
+				} else {
+					tcout << _T("Error sending message to client") << endl;
+				}
+
+				control_main->add_passenger(passenger);
+				break;
+			}
+			case PASSENGER_TYPE_GAVE_UP:
+			{
+				//TODO remove passenger from everything
+				break;
+			}
+		}
+
+		DisconnectNamedPipe(control_pipe);
 	}
 	return 0;
 }

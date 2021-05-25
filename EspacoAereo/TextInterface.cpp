@@ -83,6 +83,7 @@ DWORD WINAPI enter_text_interface(LPVOID param) {
 								_T(", max capacity : ") << plane->max_passengers <<
 								_T(", passagers : ") << "   " << //TODO put passengers
 								_T(", velocity : ") << plane->velocity << endl;
+							
 						}
 					}
 				} else if (type == _T("planes")) {
