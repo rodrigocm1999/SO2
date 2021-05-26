@@ -19,7 +19,7 @@ public:
 	unsigned int airport_counter = 0;
 	std::unordered_map<AIRPORT_ID, Airport*> airports;
 
-	std::unordered_map<PLANE_ID, std::vector<Passenger*>*> flying_passengers_map; // key = plane offset , value = all passengers
+	std::unordered_map<PLANE_ID, std::vector<Passenger*>*> boarded_passengers_map; // key = plane offset , value = all passengers
 
 	std::unordered_set<Passenger*> all_passengers;
 

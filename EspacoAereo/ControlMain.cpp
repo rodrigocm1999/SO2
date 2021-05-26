@@ -108,8 +108,8 @@ void ControlMain::board_people(PLANE_ID plane_offset, AIRPORT_ID origin_airport_
 	Plane* plane = get_plane(plane_offset);
 
 	std::vector<Passenger*>* list = origin->give_passengers_to_plane(destiny->id, plane->max_passengers);
-
-	flying_passengers_map[plane_offset] = list;
+	
+	boarded_passengers_map[plane_offset] = list;
 }
 
 void ControlMain::ended_trip(PLANE_ID plane_offset, int message_type) {
@@ -119,18 +119,18 @@ void ControlMain::ended_trip(PLANE_ID plane_offset, int message_type) {
 }
 
 void ControlMain::ended_trip(unsigned char plane_offset, PassengerMessage& message) {
-	const auto list = flying_passengers_map[plane_offset];
+	const auto list = boarded_passengers_map[plane_offset];
 
 	for (Passenger* passenger : *list) {
 		passenger->send_message(message);
 		all_passengers.erase(passenger);
 		delete passenger;
 	}
-	flying_passengers_map.erase(plane_offset);
+	boarded_passengers_map.erase(plane_offset);
 	delete list;
 }
 
 std::vector<Passenger*>* ControlMain::get_passengers_on_plane(PLANE_ID plane_offset) {
 	//TODO might cause problems with empty pairs on the map
-	return flying_passengers_map[plane_offset];
+	return boarded_passengers_map[plane_offset];
 }

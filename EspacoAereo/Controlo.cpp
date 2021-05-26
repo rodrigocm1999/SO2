@@ -134,7 +134,7 @@ int _tmain(int argc, TCHAR** argv) {
 
 			// if Plane flying warn all passengers that it went down
 			if (plane->is_flying) {
-				vector<Passenger*>* passengers = control_main->flying_passengers_map[plane->offset];
+				vector<Passenger*>* passengers = control_main->boarded_passengers_map[plane->offset];
 
 				for (Passenger* passenger : *passengers) {
 					if (passenger->send_message(passenger_message))

@@ -7,11 +7,11 @@
 #define TSTRING std::basic_string<TCHAR>
 
 typedef struct {
-	HANDLE shutdown_event;
-	HANDLE wait_thread;
-	HANDLE main_thread;
+	HANDLE stop_wait_event;
+	HANDLE pipe_updates_thread;
 	HANDLE control_pipe;
 	HANDLE this_pipe;
+	CRITICAL_SECTION critical_section;
 	
 	TSTRING destiny_port;
 	TSTRING origin_port;
@@ -19,10 +19,11 @@ typedef struct {
 	int max_wait_time;
 	bool exit;
 	bool timeout;
+	bool still_waiting;
 } TimerThread;
 
 bool read_pipe(HANDLE pipe, PassengerMessage& message);
 
 DWORD WINAPI max_wait_timer(LPVOID param);
 
-void receive_control_updates(TimerThread* timer_thread);
+DWORD WINAPI receive_control_updates(LPVOID param);

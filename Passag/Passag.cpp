@@ -102,7 +102,6 @@ int _tmain(int argc, TCHAR** argv) {
 		exit(-1);
 	}
 
-
 	TimerThread timer_thread;
 	timer_thread.exit = false;
 	timer_thread.control_pipe = control_named_pipe;
@@ -110,40 +109,40 @@ int _tmain(int argc, TCHAR** argv) {
 	timer_thread.destiny_port = destiny_port;
 	timer_thread.origin_port = origin_port;
 	timer_thread.max_wait_time = max_waiting_time_in_seconds;
-	timer_thread.main_thread = GetCurrentThread();
-	timer_thread.shutdown_event = shutdown_event;
+	timer_thread.stop_wait_event = shutdown_event;
+	InitializeCriticalSection(&timer_thread.critical_section);
 
 
 	if (message.type == PASSENGER_TYPE_GOOD_AIRPORTS) {
 		tcout << _T("You are now waiting to be boarded on the plane") << endl;
 
-		if (timer_thread.max_wait_time >= 0)
-			timer_thread.wait_thread = CreateThread(nullptr, 0, max_wait_timer, &timer_thread, 0, nullptr);
-
-		receive_control_updates(&timer_thread);
-
-		tcout << _T("Test if function gets here on shutdown timeout") << endl;
+		timer_thread.pipe_updates_thread = CreateThread(nullptr, 0, receive_control_updates, &timer_thread, 0, nullptr);
 
 		if (timer_thread.max_wait_time >= 0) {
-			const DWORD result = WaitForSingleObject(timer_thread.wait_thread, INFINITE);
-			if (result != WAIT_OBJECT_0)
-				tcout << _T("Error waiting for max_wait_thread to finish") << endl;
+			max_wait_timer(&timer_thread);
 		}
+		
 	} else if (message.type == PASSENGER_TYPE_BAD_AIRPORTS) {
 		tcout << _T("Invalid airports!") << endl;
 	} else {
 		tcout << _T("Invalid Message from control! type -> ") << message.type << endl;
 	}
 
+
+	const DWORD result = WaitForSingleObject(timer_thread.pipe_updates_thread, INFINITE);
+	if (result != WAIT_OBJECT_0)
+		tcout << _T("Error waiting for max_wait_thread to finish") << endl;
+	
+	
 	tcout << _T("Exiting...") << endl;
 
 	if (timer_thread.timeout) {
 		message.type = PASSENGER_TYPE_GAVE_UP;
 		if (!WriteFile(control_named_pipe, &message, sizeof(message), &bytes_written, nullptr)) {
-			tcout << _T("Person Gave up waiting for a plane") << endl;
+			tcout << _T("Error sending timeout alert to control") << endl;
 		}
+		tcout << _T("Person Gave up waiting for a plane") << endl;
 	}
-
 
 	if (!CloseHandle(control_named_pipe)) {
 		tcout << _T("Error closing the control named pipe -> ") << GetLastError() << endl;

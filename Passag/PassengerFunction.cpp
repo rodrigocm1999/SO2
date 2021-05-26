@@ -11,15 +11,13 @@
 using namespace std;
 
 bool read_pipe(HANDLE pipe, PassengerMessage& message) {
-
 	bool connected = ConnectNamedPipe(pipe, nullptr) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
 	if (!connected) return false;
 
 	DWORD bytes_read;
 	bool to_return = ReadFile(pipe, &message, sizeof(message),
 							  &bytes_read, nullptr) && bytes_read != 0;
-
-	DisconnectNamedPipe(pipe);
+	//DisconnectNamedPipe(pipe);
 
 	return to_return;
 }
@@ -27,14 +25,23 @@ bool read_pipe(HANDLE pipe, PassengerMessage& message) {
 DWORD WINAPI max_wait_timer(LPVOID param) {
 	auto timer_thread = (TimerThread*)param;
 
-	DWORD result = WaitForSingleObject(timer_thread->shutdown_event, timer_thread->max_wait_time * 1000);
+	DWORD result = WaitForSingleObject(timer_thread->stop_wait_event, timer_thread->max_wait_time * 1000);
 	if (result == WAIT_TIMEOUT) {
-		timer_thread->timeout = true;
-		timer_thread->exit = true;
-		CancelSynchronousIo(timer_thread->main_thread);
+
+		EnterCriticalSection(&timer_thread->critical_section);
+		const bool still_waiting = timer_thread->still_waiting;
+		LeaveCriticalSection(&timer_thread->critical_section);
+
+		if (still_waiting) {
+			timer_thread->timeout = true;
+			timer_thread->exit = true;
+
+			CancelSynchronousIo(timer_thread->pipe_updates_thread);
+
+			tcout << _T("Timed out") << endl;
+		}
 
 	} else if (result == WAIT_OBJECT_0) {
-
 	} else {
 		tcout << _T("Error waiting for shutdown event -> ") << GetLastError() << endl;
 	}
@@ -42,15 +49,23 @@ DWORD WINAPI max_wait_timer(LPVOID param) {
 	return 0;
 }
 
-void receive_control_updates(TimerThread* timer_thread) {
+DWORD WINAPI receive_control_updates(LPVOID param) {
+	auto timer_thread = (TimerThread*)param;
+
 	while (!timer_thread->exit) {
-		
 		PassengerMessage message;
 		if (!read_pipe(timer_thread->this_pipe, message)) {
-			tcout << _T("Error reading pipe -> ") << GetLastError() << endl;
+			if (GetLastError() != ERROR_OPERATION_ABORTED) {
+				tcout << _T("Error reading pipe -> ") << GetLastError() << endl;
+			}
 			timer_thread->exit = true;
 			continue;
 		}
+
+		EnterCriticalSection(&timer_thread->critical_section);
+		timer_thread->still_waiting = false;
+		SetEvent(timer_thread->stop_wait_event);
+		LeaveCriticalSection(&timer_thread->critical_section);
 
 		switch (message.type) {
 			case PASSENGER_TYPE_BOARDED:
@@ -65,7 +80,8 @@ void receive_control_updates(TimerThread* timer_thread) {
 			}
 			case PASSENGER_TYPE_MOVED:
 			{
-				tcout << _T("The plane moved to pos : (") << message.data.pos.x << _T(", ") << message.data.pos.y << _T(")") << endl;
+				tcout << _T("The plane moved to pos : (") << message.data.pos.x << _T(", ") << message.data.pos.y <<
+					_T(")") << endl;
 				break;
 			}
 			case PASSENGER_TYPE_PLANE_ARRIVED:
@@ -77,7 +93,8 @@ void receive_control_updates(TimerThread* timer_thread) {
 			}
 			case PASSENGER_TYPE_PLANE_CRASHED:
 			{
-				tcout << _T("We hope you had your seatbelt fastened... The plane is going down ... And it has crashed") << endl;
+				tcout << _T("We hope you had your seatbelt fastened... The plane is going down ... And it has crashed")
+					<< endl;
 				timer_thread->exit = true;
 				break;
 			}
@@ -89,6 +106,7 @@ void receive_control_updates(TimerThread* timer_thread) {
 			}
 			default: tcout << _T("Invalid type received -> ") << message.type << endl;
 		}
-
 	}
+
+	return 0;
 }

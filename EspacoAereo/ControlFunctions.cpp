@@ -93,7 +93,9 @@ DWORD WINAPI receive_updates(LPVOID param) {
 				PassengerMessage message;
 				message.type = PASSENGER_TYPE_MOVED;
 				for (auto* passenger : *control->get_passengers_on_plane(plane_offset)) {
-					passenger->send_message(message);
+					if (!passenger->send_message(message)) {
+						tcout << _T("Error sending message to plane, maybe remove it") << endl;
+					}
 				}
 
 				break;
@@ -213,7 +215,7 @@ DWORD WINAPI heartbeat_checker(LPVOID param) {
 
 
 DWORD WINAPI passenger_pipe_receiver(LPVOID param) {
-	ControlMain* control_main = (ControlMain*)param;
+	auto control_main = (ControlMain*)param;
 	const HANDLE control_pipe = control_main->handle_control_named_pipe;
 	DWORD bytesRead;
 	PassengerMessage message;
@@ -223,8 +225,11 @@ DWORD WINAPI passenger_pipe_receiver(LPVOID param) {
 		bool connected = ConnectNamedPipe(control_pipe, nullptr) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
 
 		if (!connected) {
-			tcout << _T("Error connecting to pipe reader -> ") << GetLastError() << endl;
-			exit_everything(control_main);
+			if (GetLastError() != ERROR_OPERATION_ABORTED) {
+				tcout << _T("Error connecting to pipe reader -> ") << GetLastError() << endl;
+				exit_everything(control_main);
+			}
+			continue;
 		}
 
 		const bool result = ReadFile(control_pipe, &message, sizeof(PassengerMessage), &bytesRead, nullptr);
