@@ -1,5 +1,7 @@
 #pragma once
 #include <unordered_map>
+#include <unordered_set>
+
 #include "Airport.h"
 #include "CircularBuffer.h"
 #include "SharedStructContents.h"
@@ -19,8 +21,8 @@ public:
 
 	std::unordered_map<PLANE_ID, std::vector<Passenger*>*> flying_passengers_map; // key = plane offset , value = all passengers
 
-	std::vector<Passenger*> all_passengers;
-	
+	std::unordered_set<Passenger*> all_passengers;
+
 	CircularBuffer* const receiving_buffer;
 
 	// points directly to shared memory
@@ -35,7 +37,7 @@ public:
 	HANDLE shutdown_event;
 	HANDLE plane_entering_lock;
 	HANDLE passenger_receiver;
-	
+
 
 	ControlMain(SharedControl* shared_control, Plane* planes, HANDLE handle_mapped_file, HANDLE handle_control_named_pipe);
 	~ControlMain();
@@ -47,7 +49,9 @@ public:
 	Plane* get_plane(PLANE_ID plane_offset);
 
 	bool add_passenger(Passenger* passenger);
-
 	CircularBuffer* get_plane_buffer(PLANE_ID offset) const;
 	void board_people(PLANE_ID plane_offset, AIRPORT_ID origin_airport_id, AIRPORT_ID destiny_airport_id);
+	void ended_trip(PLANE_ID plane_offset, int message_type);
+	void ended_trip(PLANE_ID plane_offset, PassengerMessage& message);
+	std::vector<Passenger*>* get_passengers_on_plane(PLANE_ID offset);
 };

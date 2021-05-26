@@ -75,6 +75,12 @@ DWORD WINAPI receive_updates(LPVOID param) {
 			{
 				control->plane_left_airport(plane_offset);
 				tcout << _T("Plane offset -> ") << plane_offset << _T(", left the airport") << endl;
+
+				PassengerMessage message;
+				message.type = PASSENGER_TYPE_MOVED;
+				for (auto* passenger : *control->get_passengers_on_plane(plane_offset)) {
+					passenger->send_message(message);
+				}
 				break;
 			}
 
@@ -83,24 +89,28 @@ DWORD WINAPI receive_updates(LPVOID param) {
 				Position& position = message.data.position;
 				tcout << _T("Plane offset -> ") << plane->offset << _T(", moved to : ") << position.x << _T(",") <<
 					position.y << endl;
+
+				PassengerMessage message;
+				message.type = PASSENGER_TYPE_MOVED;
+				for (auto* passenger : *control->get_passengers_on_plane(plane_offset)) {
+					passenger->send_message(message);
+				}
+
 				break;
 			}
 
 			case TYPE_TO_BOARD:
 			{
 				tcout << _T("Plane offset -> ") << plane->offset << _T(", boarding") << endl;
-				plane->flight_ready = false;
+				plane->flight_ready = true;
 
 				control->board_people(plane->offset, plane->origin_airport_id, plane->destiny_airport_id);
 
-				plane->flight_ready = true;
-				message.type = TYPE_PLANE_FINISHED_BOARDING;
-				CircularBuffer* buffer = control->get_plane_buffer(plane_offset);
-
-				for (auto passenger : *control->flying_passengers_map[plane_offset]) {
-
-
-
+				//TODO add a  lock to not change destiny after boarding plane
+				PassengerMessage message;
+				message.type = PASSENGER_TYPE_BOARDED;
+				for (auto* passenger : *control->get_passengers_on_plane(plane_offset)) {
+					passenger->send_message(message);
 				}
 
 				break;
@@ -119,7 +129,9 @@ DWORD WINAPI receive_updates(LPVOID param) {
 			case TYPE_PLANE_CRASHES:
 			{
 				tcout << _T("Plane offset -> ") << plane->offset << _T(", crashed") << endl;
-				//TODO tell the people to shutdown
+
+				control->ended_trip(plane_offset, PASSENGER_TYPE_PLANE_CRASHED);
+
 				break;
 			}
 
@@ -135,7 +147,8 @@ DWORD WINAPI receive_updates(LPVOID param) {
 				plane->origin_airport_id = plane->destiny_airport_id;
 				plane->destiny_airport_id = NOT_DEFINED_AIRPORT;
 
-				//TODO tell the people to shtudown
+				control->ended_trip(plane_offset, PASSENGER_TYPE_PLANE_ARRIVED);
+
 				break;
 			}
 			case TYPE_CONTROL_EXITING:
@@ -159,7 +172,7 @@ void exit_everything(ControlMain* control_main) {
 	message.plane_offset = 0;
 	message.type = TYPE_CONTROL_EXITING;
 	control_main->receiving_buffer->set_next_element(message);
-	
+
 	CancelSynchronousIo(control_main->passenger_receiver);
 }
 

@@ -28,4 +28,5 @@ public:
 	void add_passengers_list(std::vector<Passenger*>* passengers_list, AIRPORT_ID destiny_id);
 
 	std::vector<Passenger*>* remove_passengers(AIRPORT_ID destiny_id);
+	std::vector<Passenger*>* give_passengers_to_plane(AIRPORT_ID destiny_id, int plane_capacity);
 };

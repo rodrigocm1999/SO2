@@ -14,7 +14,6 @@
 #define TYPE_PLANE_BAD_DESTINY 12
 
 #define TYPE_TO_BOARD 20
-#define TYPE_PLANE_FINISHED_BOARDING 21
 #define TYPE_START_TRIP 23
 #define TYPE_FINISHED_TRIP 24
 #define TYPE_PLANE_MOVED 25
@@ -92,6 +91,7 @@ typedef struct {
 
 	bool flight_ready;
 	bool is_flying;
+	bool already_boarded; // TODO use this thing
 	Position position;
 
 	bool in_use;

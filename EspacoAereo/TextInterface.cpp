@@ -20,6 +20,23 @@ using namespace std;
 #define tcin cin
 #endif
 
+void print_passenger(Passenger* passenger) {
+	tcout << _T("id: ") << passenger->id
+		<< _T(", name: ") << passenger->name
+		<< _T(", origin: ") << passenger->origin->name
+		<< _T(", destiny:") << passenger->destiny->name << endl;
+}
+
+void print_plane(Plane* plane, ControlMain* control) {
+	auto list = control->get_passengers_on_plane(plane->offset);
+
+	tcout << _T("\tPlane -> offset : ") << plane->offset <<
+		_T(" , max passangers : ") << plane->max_passengers <<
+		_T(" , velocity : ") << plane->velocity <<
+		_T(" , passagers : ") << (list == nullptr ? 0 : list->size());
+
+}
+
 DWORD WINAPI enter_text_interface(LPVOID param) {
 	ControlMain* control_main = (ControlMain*)param;
 
@@ -30,6 +47,7 @@ DWORD WINAPI enter_text_interface(LPVOID param) {
 		tcout << _T("Menu -------------\n");
 		TSTRING input;
 		getline(tcin, input);
+		tcout << endl;
 		vector<TSTRING> input_parts = string_split(input, _T(" "));
 		auto command = input_parts[0];
 
@@ -72,41 +90,53 @@ DWORD WINAPI enter_text_interface(LPVOID param) {
 				TSTRING type = input_parts[1];
 
 				if (type == _T("airports")) {
+					
 					for (auto pair : control_main->airports) {
 						Airport* airport = pair.second;
 
 						tcout << _T("Airport -> name : ") << airport->name << _T("\tposition : ") << airport->position.x << _T(", ") << airport->position.y << endl;
 
 						for (Plane* plane : airport->planes) {
+							tcout << _T("\t");
+							print_plane(plane, control_main);
+						}
+						tcout << endl;
 
-							tcout << _T("\tPlane -> offset : ") << plane->offset <<
-								_T(", max capacity : ") << plane->max_passengers <<
-								_T(", passagers : ") << "   " << //TODO put passengers
-								_T(", velocity : ") << plane->velocity << endl;
-							
+						for (auto destiny_pair : airport->passengers) {
+							TSTRING airport_name = control_main->get_airport(destiny_pair.first)->name;
+							tcout << _T("\tDestiny : ") << airport_name << endl;
+							for (auto passenger : *destiny_pair.second) {
+								tcout << "\t\t";
+								print_passenger(passenger);
+							}
 						}
 					}
 				} else if (type == _T("planes")) {
 					for (int i = 0; i < control_main->shared_control->max_plane_amount; i++) {
-						const Plane& plane = control_main->planes[i];
+						Plane* plane = &control_main->planes[i];
 
-						if (plane.in_use) {
-							tcout << _T("\tPlane -> offset : ") << plane.offset <<
-								_T(" , max passangers : ") << plane.max_passengers <<
-								_T(" , velocity : ") << plane.velocity <<
-								_T(", passagers : ") << "   "; //TODO put passengers
+						const auto list = control_main->get_passengers_on_plane(plane->offset);
 
-							if (plane.is_flying) {
-								tcout << _T(", the plane is flying from '") << control_main->get_airport(plane.origin_airport_id)->name <<
-									_T("', to '") << control_main->get_airport(plane.destiny_airport_id)->name <<
-									_T("', current position : ") << plane.position.x << _T(",") << plane.position.y << endl;
+						if (plane->in_use) {
+							print_plane(plane, control_main);
+
+							if (plane->is_flying) {
+								tcout << _T(", the plane is flying from '") << control_main->get_airport(plane->origin_airport_id)->name <<
+									_T("', to '") << control_main->get_airport(plane->destiny_airport_id)->name <<
+									_T("', current position : ") << plane->position.x << _T(",") << plane->position.y << endl;
+
+								for (auto passenger : *list) {
+									tcout << "\t\t";
+									print_passenger(passenger);
+								}
 							} else {
-								tcout << _T(", airport: ") << control_main->get_airport(plane.origin_airport_id)->name << endl;
+								tcout << _T(", airport: ") << control_main->get_airport(plane->origin_airport_id)->name << endl;
 							}
 						}
 					}
 				} else if (type == _T("passengers")) {
-
+					for (auto passenger : control_main->all_passengers)
+						print_passenger(passenger);
 				}
 
 			} else {

@@ -143,11 +143,10 @@ int _tmain(int argc, TCHAR** argv) {
 			}
 		}
 	}
-	//TODO its getting stuck right now around here
 	passenger_message.type = PASSENGER_TYPE_CONTROL_EXITING;
 	// Tell Passengers to leave, if they haven't left yet
 	for (Passenger* passenger : control_main->all_passengers) {
-		if (already_left_passengers.count(passenger) != 0)
+		if (already_left_passengers.find(passenger) != already_left_passengers.end())
 			continue;
 
 		if (!passenger->send_message(passenger_message))

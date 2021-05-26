@@ -8,6 +8,7 @@
 
 #include "SharedPassagStruct.h"
 #include "PassengerFunction.h"
+#include "Utils.h"
 
 using namespace std;
 
@@ -22,7 +23,6 @@ using namespace std;
 #define tcin cin
 #define tstringstream stringstream
 #endif
-
 
 int _tmain(int argc, TCHAR** argv) {
 #ifdef UNICODE
@@ -42,12 +42,16 @@ int _tmain(int argc, TCHAR** argv) {
 	int max_waiting_time_in_seconds = -1;
 	if (argc > 4) {
 		max_waiting_time_in_seconds = _ttoi(argv[4]);
+		if (max_waiting_time_in_seconds <= 0) {
+			tcout << _T("Invalid wait time") << endl;
+			return 0;
+		}
 	}
 
 	DWORD process_id = GetProcessId(GetCurrentProcess());
 
-	tcout  <<_T("Process Id : ")  << process_id << endl;
-	
+	tcout << _T("Process Id : ") << process_id << endl;
+
 	TSTRING pipe_name(PIPE_NAME_PREFIX);
 	{
 		tstringstream oss;
@@ -55,11 +59,18 @@ int _tmain(int argc, TCHAR** argv) {
 		pipe_name.append(oss.str());
 	}
 
+	HANDLE shutdown_event = CreateEvent(nullptr, true, false, nullptr);
+	if (shutdown_event == nullptr) {
+		tcout << _T("Hanndle creation error") << endl;
+		return -1;
+	}
+
 	const HANDLE passenger_named_pipe = CreateNamedPipe(pipe_name.c_str(), PIPE_ACCESS_INBOUND,
 														PIPE_WAIT | PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE,
 														1, 0, sizeof(PassengerMessage), 1000, nullptr);
 	if (passenger_named_pipe == INVALID_HANDLE_VALUE) {
 		tcout << _T("Error creating named pipe -> ") << GetLastError() << endl;
+		CloseHandle(shutdown_event);
 		return -1;
 	}
 
@@ -69,6 +80,7 @@ int _tmain(int argc, TCHAR** argv) {
 	if (control_named_pipe == INVALID_HANDLE_VALUE) {
 		tcout << _T("Error opening control named pipe -> ") << GetLastError() << endl;
 		CloseHandle(passenger_named_pipe);
+		CloseHandle(shutdown_event);
 		return -1;
 	}
 
@@ -86,17 +98,37 @@ int _tmain(int argc, TCHAR** argv) {
 		tcout << _T("Error connecting to pipe reader -> ") << GetLastError() << endl;
 		CloseHandle(passenger_named_pipe);
 		CloseHandle(control_named_pipe);
+		CloseHandle(shutdown_event);
 		exit(-1);
 	}
+
+
+	TimerThread timer_thread;
+	timer_thread.exit = false;
+	timer_thread.control_pipe = control_named_pipe;
+	timer_thread.this_pipe = passenger_named_pipe;
+	timer_thread.destiny_port = destiny_port;
+	timer_thread.origin_port = origin_port;
+	timer_thread.max_wait_time = max_waiting_time_in_seconds;
+	timer_thread.main_thread = GetCurrentThread();
+	timer_thread.shutdown_event = shutdown_event;
+
 
 	if (message.type == PASSENGER_TYPE_GOOD_AIRPORTS) {
 		tcout << _T("You are now waiting to be boarded on the plane") << endl;
 
-		//TODO max_waiting_time_in_seconds thread to wait for the shits
-		//create_thread();
+		if (timer_thread.max_wait_time >= 0)
+			timer_thread.wait_thread = CreateThread(nullptr, 0, max_wait_timer, &timer_thread, 0, nullptr);
 
-		receive_control_updates(passenger_named_pipe, destiny_port);
+		receive_control_updates(&timer_thread);
 
+		tcout << _T("Test if function gets here on shutdown timeout") << endl;
+
+		if (timer_thread.max_wait_time >= 0) {
+			const DWORD result = WaitForSingleObject(timer_thread.wait_thread, INFINITE);
+			if (result != WAIT_OBJECT_0)
+				tcout << _T("Error waiting for max_wait_thread to finish") << endl;
+		}
 	} else if (message.type == PASSENGER_TYPE_BAD_AIRPORTS) {
 		tcout << _T("Invalid airports!") << endl;
 	} else {
@@ -105,6 +137,13 @@ int _tmain(int argc, TCHAR** argv) {
 
 	tcout << _T("Exiting...") << endl;
 
+	if (timer_thread.timeout) {
+		message.type = PASSENGER_TYPE_GAVE_UP;
+		if (!WriteFile(control_named_pipe, &message, sizeof(message), &bytes_written, nullptr)) {
+			tcout << _T("Person Gave up waiting for a plane") << endl;
+		}
+	}
+
 
 	if (!CloseHandle(control_named_pipe)) {
 		tcout << _T("Error closing the control named pipe -> ") << GetLastError() << endl;
@@ -112,7 +151,7 @@ int _tmain(int argc, TCHAR** argv) {
 	if (!CloseHandle(passenger_named_pipe)) {
 		tcout << _T("Error closing the passenger named pipe -> ") << GetLastError() << endl;
 	}
-
+	CloseHandle(shutdown_event);
 	//TODO Funcionamento: 
 	//	O passageiro é atribuído ao aeroporto origem, ficando a aguardar que exista um avião disponível para o aeroporto destino. 
 	//		Quando tal avião existir, o passageiro embarca automaticamente e, ao chegar ao aeroporto destino, desembarca e o programa termina.
