@@ -38,12 +38,11 @@ DWORD WINAPI receive_updates(LPVOID param) {
 					plane->position = airport->position;
 					plane->origin_airport_id = airport->id;
 					airport->add_plane(plane);
+
 				} else {
-					// buffer mutexes get created/opened and closed in this scope
-					// but it doesn't matter because this plane is leaving
-					CircularBuffer buffer(&plane->buffer, plane_offset);
+					auto buffer = control->get_plane_buffer(plane_offset);
 					message.type = TYPE_PLANE_NOT_ALLOWED;
-					buffer.set_next_element(message);
+					buffer->set_next_element(message);
 
 					plane->in_use = false;
 				}
@@ -77,7 +76,7 @@ DWORD WINAPI receive_updates(LPVOID param) {
 				tcout << _T("Plane offset -> ") << plane_offset << _T(", left the airport") << endl;
 
 				PassengerMessage message;
-				message.type = PASSENGER_TYPE_MOVED;
+				message.type = PASSENGER_TYPE_STARTED_FLYING;
 				for (auto* passenger : *control->get_passengers_on_plane(plane_offset)) {
 					passenger->send_message(message);
 				}
@@ -92,6 +91,7 @@ DWORD WINAPI receive_updates(LPVOID param) {
 
 				PassengerMessage message;
 				message.type = PASSENGER_TYPE_MOVED;
+				message.data.pos = position;
 				for (auto* passenger : *control->get_passengers_on_plane(plane_offset)) {
 					if (!passenger->send_message(message)) {
 						tcout << _T("Error sending message to plane, maybe remove it") << endl;
@@ -121,13 +121,13 @@ DWORD WINAPI receive_updates(LPVOID param) {
 			case TYPE_PLANE_LEAVES:
 			{
 				tcout << _T("Plane offset -> ") << plane->offset << _T(", left") << endl;
-
+					
 				if (plane->origin_airport_id != NOT_DEFINED_AIRPORT) {
 					control->plane_left_airport(plane_offset);
 				}
 				break;
 			}
-
+			//TODO remove passengers when they leave or error happens when sending (cuz they left)
 			case TYPE_PLANE_CRASHES:
 			{
 				tcout << _T("Plane offset -> ") << plane->offset << _T(", crashed") << endl;
@@ -223,7 +223,7 @@ DWORD WINAPI passenger_pipe_receiver(LPVOID param) {
 	while (!control_main->exit) {
 
 		bool connected = ConnectNamedPipe(control_pipe, nullptr) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
-
+		
 		if (!connected) {
 			if (GetLastError() != ERROR_OPERATION_ABORTED) {
 				tcout << _T("Error connecting to pipe reader -> ") << GetLastError() << endl;

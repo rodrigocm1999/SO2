@@ -49,7 +49,7 @@
 #define HEARTBEAT_TIME_CONTROL 3000L
 #define HEARTBEAT_TIME_PLANE 2000L
 
-#define AIRPORT_ID unsigned char
+#define AIRPORT_ID unsigned int
 #define PLANE_ID unsigned char
 
 
