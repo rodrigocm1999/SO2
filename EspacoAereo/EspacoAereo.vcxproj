@@ -120,7 +120,7 @@
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
@@ -146,6 +146,7 @@
     <ClCompile Include="ControlFunctions.cpp" />
     <ClCompile Include="Controlo.cpp" />
     <ClCompile Include="ControlMain.cpp" />
+    <ClCompile Include="ControloMainGUI.cpp" />
     <ClCompile Include="Passenger.cpp" />
     <ClCompile Include="RegistryStuff.cpp" />
     <ClCompile Include="TextInterface.cpp" />
@@ -159,10 +160,14 @@
     <ClInclude Include="Passenger.h" />
     <ClInclude Include="RegistryStuff.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="resource1.h" />
     <ClInclude Include="SharedPassagStruct.h" />
     <ClInclude Include="SharedStructContents.h" />
     <ClInclude Include="TextInterface.h" />
     <ClInclude Include="Utils.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Controlo1.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

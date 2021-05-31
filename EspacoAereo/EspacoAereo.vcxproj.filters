@@ -42,6 +42,9 @@
     <ClCompile Include="Passenger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ControloMainGUI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Airport.h">
@@ -77,5 +80,13 @@
     <ClInclude Include="SharedStructContents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="resource1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Controlo1.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>
