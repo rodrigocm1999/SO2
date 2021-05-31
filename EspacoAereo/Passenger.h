@@ -8,24 +8,29 @@
 
 #define TSTRING std::basic_string<TCHAR>
 
+#define PASSENGER_ID DWORD
+
 class Airport;
 
 class Passenger {
-
+	
 public:
 
-	const DWORD id;
+	PASSENGER_ID id;
 	Airport* const origin;
 	Airport* const destiny;
 	const std::basic_string<TCHAR> name;
 
+	bool boarded;
+	PLANE_ID flying_plane_id;
+	
 	HANDLE pipe;
 
-	Passenger(const DWORD id, Airport* origin, Airport* destiny, const TSTRING& name);
+	Passenger(PASSENGER_ID id, Airport* origin, Airport* destiny, const TSTRING& name);
 	~Passenger();
 
-	bool send_message(PassengerMessage& message);
-	bool send_message(int type);
 
+private:
+	bool send_message(PassengerMessage& message);
 };
 

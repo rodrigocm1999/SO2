@@ -51,8 +51,14 @@ DWORD WINAPI receive_updates(LPVOID param) {
 			case TYPE_NEXT_DESTINY:
 			{
 				TSTRING airport_name = message.data.airport_name;
-
 				CircularBuffer* buffer = control->get_plane_buffer(plane_offset);
+
+				if (plane->already_boarded) {
+					message.type = TYPE_ERROR;
+					memcpy(message.data.error_message, _T("Plane not ready to fly"), BUFFER_SIZE * sizeof(TCHAR));
+					buffer->set_next_element(message);
+				}
+
 				Airport* destiny = control->get_airport(airport_name);
 
 				if (destiny != nullptr && destiny->id != plane->origin_airport_id) {
@@ -77,8 +83,8 @@ DWORD WINAPI receive_updates(LPVOID param) {
 
 				PassengerMessage message;
 				message.type = PASSENGER_TYPE_STARTED_FLYING;
-				for (auto* passenger : *control->get_passengers_on_plane(plane_offset)) {
-					passenger->send_message(message);
+				for (auto passenger : control->get_passengers_object_on_plane(plane_offset)) {
+					control->send_message_to_passenger(passenger, message);
 				}
 				break;
 			}
@@ -92,10 +98,8 @@ DWORD WINAPI receive_updates(LPVOID param) {
 				PassengerMessage message;
 				message.type = PASSENGER_TYPE_MOVED;
 				message.data.pos = position;
-				for (auto* passenger : *control->get_passengers_on_plane(plane_offset)) {
-					if (!passenger->send_message(message)) {
-						tcout << _T("Error sending message to plane, maybe remove it") << endl;
-					}
+				for (auto passenger : control->get_passengers_object_on_plane(plane_offset)) {
+					control->send_message_to_passenger(passenger, message);
 				}
 
 				break;
@@ -104,15 +108,16 @@ DWORD WINAPI receive_updates(LPVOID param) {
 			case TYPE_TO_BOARD:
 			{
 				tcout << _T("Plane offset -> ") << plane->offset << _T(", boarding") << endl;
-				plane->flight_ready = true;
 
 				control->board_people(plane->offset, plane->origin_airport_id, plane->destiny_airport_id);
+				plane->flight_ready = true;
+				plane->already_boarded = true;
 
-				//TODO add a  lock to not change destiny after boarding plane
 				PassengerMessage message;
 				message.type = PASSENGER_TYPE_BOARDED;
-				for (auto* passenger : *control->get_passengers_on_plane(plane_offset)) {
-					passenger->send_message(message);
+				for (auto passenger : control->get_passengers_object_on_plane(plane_offset)) {
+					tcout << _T("pasenger id -> ") << passenger->id << endl;
+					control->send_message_to_passenger(passenger, message);
 				}
 
 				break;
@@ -121,13 +126,13 @@ DWORD WINAPI receive_updates(LPVOID param) {
 			case TYPE_PLANE_LEAVES:
 			{
 				tcout << _T("Plane offset -> ") << plane->offset << _T(", left") << endl;
-					
+
 				if (plane->origin_airport_id != NOT_DEFINED_AIRPORT) {
 					control->plane_left_airport(plane_offset);
 				}
 				break;
 			}
-			//TODO remove passengers when they leave or error happens when sending (cuz they left)
+
 			case TYPE_PLANE_CRASHES:
 			{
 				tcout << _T("Plane offset -> ") << plane->offset << _T(", crashed") << endl;
@@ -200,8 +205,6 @@ DWORD WINAPI heartbeat_checker(LPVOID param) {
 						message.plane_offset = i;
 						message.type = TYPE_PLANE_CRASHES;
 						control->receiving_buffer->set_next_element(message);
-
-						//TODO warn passengers if mid flight	
 					}
 				} else {
 					plane->heartbeat = false;
@@ -223,7 +226,7 @@ DWORD WINAPI passenger_pipe_receiver(LPVOID param) {
 	while (!control_main->exit) {
 
 		bool connected = ConnectNamedPipe(control_pipe, nullptr) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
-		
+
 		if (!connected) {
 			if (GetLastError() != ERROR_OPERATION_ABORTED) {
 				tcout << _T("Error connecting to pipe reader -> ") << GetLastError() << endl;
@@ -251,14 +254,14 @@ DWORD WINAPI passenger_pipe_receiver(LPVOID param) {
 
 				if (origin == nullptr || destiny == nullptr) {
 
-					if (!passenger->send_message(PASSENGER_TYPE_BAD_AIRPORTS))
+					if (!control_main->send_message_to_passenger(passenger, PASSENGER_TYPE_BAD_AIRPORTS))
 						tcout << _T("Error sending message to client") << endl;
 					delete passenger;
 					break;
 				}
 
 
-				if (passenger->send_message(PASSENGER_TYPE_GOOD_AIRPORTS)) {
+				if (control_main->send_message_to_passenger(passenger, PASSENGER_TYPE_GOOD_AIRPORTS)) {
 					tcout << _T("Received new passenger -> id : ") << message.id << _T("\tname : ") << message.data.new_passenger.name
 						<< _T("\torigin : ") << message.data.new_passenger.origin << _T("\tDestiny : ") << message.data.new_passenger.destiny << endl;
 				} else {
@@ -269,10 +272,8 @@ DWORD WINAPI passenger_pipe_receiver(LPVOID param) {
 				break;
 			}
 			case PASSENGER_TYPE_GAVE_UP:
-			{
-				//TODO remove passenger from everything
+				control_main->remove_passenger(control_main->get_passenger_by_id(message.id));
 				break;
-			}
 		}
 
 		DisconnectNamedPipe(control_pipe);

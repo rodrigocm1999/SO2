@@ -21,29 +21,36 @@ DWORD WINAPI receive_updates(LPVOID param) {
 		bool to_exit = false;
 
 		switch (message.type) {
-		case TYPE_CONTROL_EXITING:
-			tcout << _T("Control Exiting\n");
-			plane_main->exit = true;
-			to_exit = true;
-			break;
-		case TYPE_PLANE_NOT_ALLOWED:
-			tcout << _T("Indicated airport doesn't exist\n");
-			plane_main->exit = true;
-			to_exit = true;
-			break;
-		case TYPE_PLANE_OK_DESTINY: {
-			plane_main->destiny_position = message.data.position;
-			plane_main->this_plane->flight_ready = true;
-			tcout << _T("You are now allowed to fly to your destiny\n");
-			break;
-		}
-		case TYPE_PLANE_BAD_DESTINY: {
-			plane_main->this_plane->flight_ready = false;
-			plane_main->this_plane->destiny_airport_id = NOT_DEFINED_AIRPORT;
-			tcout << _T("Invalid destiny\n");
-			break;
-		}default:
-			tcout << _T("Invalid type received from control :") << message.type << endl;
+			case TYPE_CONTROL_EXITING:
+				tcout << _T("Control Exiting") << endl;
+				plane_main->exit = true;
+				to_exit = true;
+				break;
+
+			case TYPE_PLANE_NOT_ALLOWED:
+				tcout << _T("Indicated airport doesn't exist") << endl;
+				plane_main->exit = true;
+				to_exit = true;
+				break;
+
+			case TYPE_PLANE_OK_DESTINY:
+				plane_main->destiny_position = message.data.position;
+				plane_main->this_plane->flight_ready = true;
+				tcout << _T("You are now allowed to fly to your destiny") << endl;
+				break;
+
+			case TYPE_PLANE_BAD_DESTINY:
+				plane_main->this_plane->flight_ready = false;
+				plane_main->this_plane->destiny_airport_id = NOT_DEFINED_AIRPORT;
+				tcout << _T("Invalid destiny") << endl;
+				break;
+
+			case TYPE_ERROR:
+				tcout << _T("Error from control -> ") << message.data.error_message << endl;
+				break;
+
+			default:
+				tcout << _T("Invalid type received from control :") << message.type << endl;
 		}
 
 		if (to_exit) {
@@ -68,8 +75,8 @@ DWORD WINAPI fly_plane(LPVOID param) {
 			Position next_pos = plane->position;
 
 			result = move(plane->position.x, plane->position.y,
-				plane_main->destiny_position.x, plane_main->destiny_position.y,
-				&next_pos.x, &next_pos.y);
+						  plane_main->destiny_position.x, plane_main->destiny_position.y,
+						  &next_pos.x, &next_pos.y);
 
 			if (result == PLANE_MOVED) {
 				plane->position = next_pos;
@@ -78,7 +85,7 @@ DWORD WINAPI fly_plane(LPVOID param) {
 				plane->position = next_pos;
 				break;
 			} else {
-				tcout << _T("What the heck happened. Error when flying. move() returned error\n");
+				tcout << _T("What the heck happened. Error when flying. move() returned error") << endl;
 				exit_everything(plane_main);
 			}
 		}
@@ -116,7 +123,7 @@ DWORD WINAPI heartbeat(LPVOID param) {
 }
 
 void exit_everything(PlaneMain* plane_main) {
-	tcout << _T("Exiting\n-----------------------------");
+	tcout << _T("Exiting\n-----------------------------") << endl;
 
 	plane_main->this_plane->in_use = false;
 

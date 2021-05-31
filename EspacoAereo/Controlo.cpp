@@ -134,10 +134,11 @@ int _tmain(int argc, TCHAR** argv) {
 
 			// if Plane flying warn all passengers that it went down
 			if (plane->is_flying) {
-				vector<Passenger*>* passengers = control_main->boarded_passengers_map[plane->offset];
+				auto passengers = control_main->boarded_passengers_map[plane->offset];
 
-				for (Passenger* passenger : *passengers) {
-					if (passenger->send_message(passenger_message))
+				for (auto passenger_id : *passengers) {
+					auto passenger = control_main->get_passenger_by_id(passenger_id);
+					if (control_main->send_message_to_passenger(passenger, passenger_message))
 						already_left_passengers.insert(passenger);
 				}
 			}
@@ -145,11 +146,12 @@ int _tmain(int argc, TCHAR** argv) {
 	}
 	passenger_message.type = PASSENGER_TYPE_CONTROL_EXITING;
 	// Tell Passengers to leave, if they haven't left yet
-	for (Passenger* passenger : control_main->all_passengers) {
+	for (auto p : control_main->all_passengers) {
+		auto passenger = p.second;
 		if (already_left_passengers.find(passenger) != already_left_passengers.end())
 			continue;
 
-		if (!passenger->send_message(passenger_message))
+		if (!control_main->send_message_to_passenger(passenger, passenger_message))
 			tcout << _T("Error Telling passenger to leave, id -> ") << passenger->id << endl;
 	}
 

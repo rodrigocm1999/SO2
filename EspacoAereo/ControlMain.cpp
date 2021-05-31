@@ -1,5 +1,7 @@
 #include "ControlMain.h"
 
+#include <iostream>
+
 #include "Utils.h"
 
 using namespace std;
@@ -28,6 +30,10 @@ ControlMain::~ControlMain() {
 
 	for (auto pair : this->airports) {
 		delete pair.second;
+	}
+
+	for (auto passenger : all_passengers) {
+		delete passenger.second;
 	}
 
 	CloseHandle(receiving_thread);
@@ -75,7 +81,7 @@ Airport* ControlMain::get_airport(AIRPORT_ID id) {
 void ControlMain::plane_left_airport(PLANE_ID plane_offset) {
 	Plane* plane = get_plane(plane_offset);
 	Airport* airport = get_airport(plane->origin_airport_id);
-	
+
 	for (unsigned int i = 0; i < airport->planes.size(); ++i) {
 		Plane* cur_plane = airport->planes[i];
 		if (cur_plane == plane) {
@@ -90,7 +96,7 @@ Plane* ControlMain::get_plane(PLANE_ID plane_offset) {
 }
 
 bool ControlMain::add_passenger(Passenger* passenger) {
-	all_passengers.insert(passenger);
+	all_passengers.insert(make_pair(passenger->id, passenger));
 	passenger->origin->add_passenger(passenger, passenger->destiny->id);
 	return true;
 }
@@ -107,8 +113,14 @@ void ControlMain::board_people(PLANE_ID plane_offset, AIRPORT_ID origin_airport_
 
 	Plane* plane = get_plane(plane_offset);
 
-	std::vector<Passenger*>* list = origin->give_passengers_to_plane(destiny->id, plane->max_passengers);
-	
+	auto list = origin->give_passengers_to_plane(destiny->id, plane->max_passengers);
+
+	for (auto passenger_id : *list) {
+		auto passenger = get_passenger_by_id(passenger_id);
+		passenger->boarded = true;
+		passenger->flying_plane_id = plane->offset;
+	}
+
 	boarded_passengers_map[plane_offset] = list;
 }
 
@@ -121,16 +133,75 @@ void ControlMain::ended_trip(PLANE_ID plane_offset, int message_type) {
 void ControlMain::ended_trip(unsigned char plane_offset, PassengerMessage& message) {
 	const auto list = boarded_passengers_map[plane_offset];
 
-	for (Passenger* passenger : *list) {
-		passenger->send_message(message);
-		all_passengers.erase(passenger);
+	for (auto passenger_id : *list) {
+		auto passenger = get_passenger_by_id(passenger_id);
+		send_message_to_passenger(passenger, message);
+		all_passengers.erase(passenger->id);
 		delete passenger;
 	}
 	boarded_passengers_map.erase(plane_offset);
 	delete list;
 }
 
-std::vector<Passenger*>* ControlMain::get_passengers_on_plane(PLANE_ID plane_offset) {
-	//TODO might cause problems with empty pairs on the map
+std::vector<PASSENGER_ID>* ControlMain::get_passengers_on_plane(PLANE_ID plane_offset) {
 	return boarded_passengers_map[plane_offset];
+}
+
+std::vector<Passenger*> ControlMain::get_passengers_object_on_plane(unsigned char plane_id) {
+	auto plane_passengers = get_passengers_on_plane(plane_id);
+
+	vector<Passenger*> list;
+	list.reserve(plane_passengers->size());
+	
+	for (auto passenger : *plane_passengers)
+		list.push_back(get_passenger_by_id(passenger));
+
+	return list;
+}
+
+bool ControlMain::send_message_to_passenger(Passenger* passenger, const PassengerMessage& message) {
+	if (!_send_passenger_message(passenger, message)) {
+		remove_passenger(passenger);
+		return false;
+	}
+	return true;
+}
+
+bool ControlMain::send_message_to_passenger(Passenger* passenger, int type) {
+	PassengerMessage message;
+	message.type = type;
+	return send_message_to_passenger(passenger, message);
+}
+
+Passenger* ControlMain::get_passenger_by_id(PASSENGER_ID id) {
+	return all_passengers[id];
+}
+
+bool ControlMain::_send_passenger_message(Passenger* passenger, const PassengerMessage& message) {
+	DWORD bytes_written;
+	return WriteFile(passenger->pipe, &message, sizeof(message), &bytes_written, nullptr) && bytes_written != 0;
+}
+
+void ControlMain::remove_passenger(Passenger* passenger) {
+	//TODO properly remove elements from all places
+	std::cout << "removing passenger id -> " << passenger->id << "\n";
+
+	all_passengers.erase(passenger->id);
+
+	vector<PASSENGER_ID>* list = nullptr;
+
+	if (passenger->boarded)
+		list = get_passengers_on_plane(passenger->flying_plane_id);
+	else
+		list = passenger->origin->passengers[passenger->destiny->id];
+
+	for (auto it = list->begin(); it < list->end(); it++) {
+
+		if (*it == passenger->id) {
+			list->erase(it);
+			break;
+		}
+	}
+
+	delete passenger;
 }

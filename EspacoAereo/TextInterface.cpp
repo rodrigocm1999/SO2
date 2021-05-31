@@ -90,7 +90,7 @@ DWORD WINAPI enter_text_interface(LPVOID param) {
 				TSTRING type = input_parts[1];
 
 				if (type == _T("airports")) {
-					
+
 					for (auto pair : control_main->airports) {
 						Airport* airport = pair.second;
 
@@ -107,7 +107,7 @@ DWORD WINAPI enter_text_interface(LPVOID param) {
 							tcout << _T("\tDestiny : ") << airport_name << endl;
 							for (auto passenger : *destiny_pair.second) {
 								tcout << "\t\t";
-								print_passenger(passenger);
+								print_passenger(control_main->get_passenger_by_id(passenger));
 							}
 						}
 					}
@@ -127,7 +127,7 @@ DWORD WINAPI enter_text_interface(LPVOID param) {
 
 								for (auto passenger : *list) {
 									tcout << "\t\t";
-									print_passenger(passenger);
+									print_passenger(control_main->get_passenger_by_id(passenger));
 								}
 							} else {
 								tcout << _T(", airport: ") << control_main->get_airport(plane->origin_airport_id)->name << endl;
@@ -136,7 +136,7 @@ DWORD WINAPI enter_text_interface(LPVOID param) {
 					}
 				} else if (type == _T("passengers")) {
 					for (auto passenger : control_main->all_passengers)
-						print_passenger(passenger);
+						print_passenger(passenger.second);
 				}
 
 			} else {

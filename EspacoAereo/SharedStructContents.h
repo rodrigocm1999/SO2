@@ -21,6 +21,8 @@
 #define TYPE_PLANE_LEAVES 30
 #define TYPE_PLANE_CRASHES 31
 
+#define TYPE_ERROR 999
+
 
 #define CONTROL_MUTEX_PREFIX -99
 
@@ -62,6 +64,7 @@ typedef struct position {
 typedef union { // check if needs more stuff to send
 	TCHAR airport_name[BUFFER_SIZE];
 	Position position;
+	TCHAR error_message[BUFFER_SIZE];
 }Data;
 
 typedef struct PlaneControlMessage {
@@ -91,7 +94,7 @@ typedef struct {
 
 	bool flight_ready;
 	bool is_flying;
-	bool already_boarded; // TODO use this thing
+	bool already_boarded;
 	Position position;
 
 	bool in_use;

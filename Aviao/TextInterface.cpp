@@ -57,6 +57,10 @@ void board_command(PlaneMain* plane_main) {
 		tcout << _T("No defined destiny") << endl;
 		return;
 	}
+	if (plane_main->this_plane->already_boarded) {
+		tcout << _T("Already boarded, can't board again") << endl;
+		return;
+	}
 
 	plane_main->this_plane->flight_ready = false;
 
@@ -68,6 +72,10 @@ void board_command(PlaneMain* plane_main) {
 void destiny_command(PlaneMain* plane_main, vector<TSTRING> input_parts) {
 	if (input_parts.size() != 2) {
 		tcout << _T("Invalid Syntax -> destiny <name>") << endl;
+		return;
+	}
+	if (plane_main->this_plane->already_boarded) {
+		tcout << _T("Already boarded, can't change destiny") << endl;
 		return;
 	}
 

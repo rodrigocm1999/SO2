@@ -29,14 +29,3 @@ Passenger::Passenger(const DWORD id, Airport* origin, Airport* destiny, const TS
 Passenger::~Passenger() {
 	CloseHandle(pipe);
 }
-
-bool Passenger::send_message(PassengerMessage& message) {
-	DWORD bytes_written;
-	return WriteFile(pipe, &message, sizeof(message), &bytes_written, nullptr) && bytes_written != 0;
-}
-
-bool Passenger::send_message(int type) {
-	PassengerMessage message;
-	message.type = type;
-	return send_message(message);
-}

@@ -16,7 +16,8 @@ public:
 	Position position;
 
 	std::vector<Plane*> planes; // Plane * in shared memory, do NOT DELETE
-	std::unordered_map<AIRPORT_ID, std::vector<Passenger*>*> passengers; // key = destiny airport , value = vector<Passanger*>*
+
+	std::unordered_map<AIRPORT_ID, std::vector<PASSENGER_ID>*> passengers; // key = destiny airport , value = vector<Passanger*>*
 
 
 	Airport(int id, const TCHAR* name, int x, int y);
@@ -25,8 +26,8 @@ public:
 	void add_plane(Plane* plane);
 
 	void add_passenger(Passenger* passenger, AIRPORT_ID destiny_id);
-	void add_passengers_list(std::vector<Passenger*>* passengers_list, AIRPORT_ID destiny_id);
+	void add_passengers_list(std::vector<PASSENGER_ID>* passengers_list, AIRPORT_ID destiny_id);
 
-	std::vector<Passenger*>* remove_passengers(AIRPORT_ID destiny_id);
-	std::vector<Passenger*>* give_passengers_to_plane(AIRPORT_ID destiny_id, int plane_capacity);
+	std::vector<PASSENGER_ID>* remove_passengers(AIRPORT_ID destiny_id);
+	std::vector<PASSENGER_ID>* give_passengers_to_plane(AIRPORT_ID destiny_id, int plane_capacity);
 };

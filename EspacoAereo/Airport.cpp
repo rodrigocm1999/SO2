@@ -19,19 +19,19 @@ void Airport::add_plane(Plane* plane) {
 }
 
 void Airport::add_passenger(Passenger* passenger, AIRPORT_ID destiny_id) {
-	vector<Passenger*>* passenger_list = passengers[destiny_id];
+	vector<PASSENGER_ID>* passenger_list = passengers[destiny_id];
 
 	if (passenger_list == nullptr) {
-		auto* new_vector = new vector<Passenger*>;
+		auto* new_vector = new vector<PASSENGER_ID>;
 		passengers[destiny_id] = new_vector;
 		passenger_list = new_vector;
 	}
 
-	passenger_list->push_back(passenger);
+	passenger_list->push_back(passenger->id);
 }
 
-void Airport::add_passengers_list(vector<Passenger*>* passengers_list, AIRPORT_ID destiny_id) {
-	vector<Passenger*>* already_created = passengers[destiny_id];
+void Airport::add_passengers_list(vector<PASSENGER_ID>* passengers_list, AIRPORT_ID destiny_id) {
+	vector<PASSENGER_ID>* already_created = passengers[destiny_id];
 
 	if (already_created == nullptr) {
 		passengers.insert(make_pair(destiny_id, passengers_list));
@@ -42,24 +42,25 @@ void Airport::add_passengers_list(vector<Passenger*>* passengers_list, AIRPORT_I
 }
 
 
-vector<Passenger*>* Airport::remove_passengers(AIRPORT_ID destiny_id) {
-	vector<Passenger*>* list = passengers[destiny_id];
+vector<PASSENGER_ID>* Airport::remove_passengers(AIRPORT_ID destiny_id) {
+	auto list = passengers[destiny_id];
 	passengers.erase(destiny_id);
 	return list;
 }
 
-vector<Passenger*>* Airport::give_passengers_to_plane(AIRPORT_ID destiny_id, int plane_capacity) {
-	vector<Passenger*>* list = passengers[destiny_id];
+vector<PASSENGER_ID>* Airport::give_passengers_to_plane(AIRPORT_ID destiny_id, int plane_capacity) {
+	auto list = passengers[destiny_id];
 	if (list->size() <= plane_capacity) {
 		passengers.erase(destiny_id);
 		return list;
-
-	} else {
-		auto into_the_plane = new vector<Passenger*>(plane_capacity);
-
-		into_the_plane->insert(into_the_plane->begin(), list->begin(), list->begin() + plane_capacity);
-		list->erase(list->begin(), list->begin() + plane_capacity);
-
-		return into_the_plane;
 	}
+
+	auto into_the_plane = new vector<PASSENGER_ID>(plane_capacity);
+
+	const auto last_element = list->begin() + plane_capacity;
+
+	into_the_plane->insert(into_the_plane->begin(), list->begin(), last_element);
+	list->erase(list->begin(), last_element);
+
+	return into_the_plane;
 }
