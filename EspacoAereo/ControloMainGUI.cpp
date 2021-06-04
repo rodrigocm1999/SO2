@@ -17,6 +17,10 @@
 #define ACCEPT 5
 
 
+
+#define END_LINE _T("\r\n")
+
+
 #define TSTRING std::basic_string<TCHAR>
 
 #ifdef UNICODE
@@ -43,6 +47,10 @@ HANDLES_N_STUFF stuff;
 LRESULT CALLBACK window_event_handler(HWND, UINT, WPARAM, LPARAM);
 
 void AddControls(HWND, HINSTANCE, HANDLES_N_STUFF*);
+
+TSTRING print_airports(ControlMain*);
+TSTRING print_planes(ControlMain*);
+TSTRING print_passengers(ControlMain*);
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nCmdShow) {
 	HWND hWnd;
@@ -156,20 +164,24 @@ LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 				}
 
 				case LIST_AIRPORTS: {
-					tstringstream stream;
-					for (auto pair : main_struct->control->airports) {
-						Airport* airport = pair.second;
-						stream << _T("Airport -> name : ") << airport->name << _T("\tposition : ") << airport->position.x << _T(", ") << airport->position.y;
-					}
-
-					TSTRING str = stream.str();
+					TSTRING str = print_airports(main_struct->control);
 					SetWindowText(main_struct->list_info_text_field, str.c_str());
 					break;
 				}
 				case LIST_PLANES:
+					{
+						TSTRING str = print_planes(main_struct->control);
+						SetWindowText(main_struct->list_info_text_field, str.c_str());
+						break;
+					}
 
 					break;
 				case LIST_PASSANGERS:
+					{
+						TSTRING str = print_passengers(main_struct->control);
+						SetWindowText(main_struct->list_info_text_field, str.c_str());
+						break;
+					}
 
 					break;
 				case ACCEPT:
@@ -221,19 +233,85 @@ LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 void AddControls(HWND hWnd, HINSTANCE hInstance, HANDLES_N_STUFF* main_struct) {
 
 	main_struct->map_area =
-		CreateWindowW(_T("static"), _T(""), WS_VISIBLE | WS_CHILD | WS_BORDER,
+		CreateWindowW(_T("Static"), _T(""), WS_VISIBLE | WS_CHILD | WS_BORDER,
 					  0, 0, MAP_SIZE, MAP_SIZE, hWnd, NULL, NULL, NULL);
 
 	main_struct->airport_name_text_field =
 		CreateWindowW(_T("EDIT"), 0, WS_VISIBLE | WS_CHILD | WS_BORDER, 1172, 10, 250, 30, hWnd, NULL, hInstance, NULL);
 
-	CreateWindowW(_T("Button"), _T("Add Airport"), WS_VISIBLE | WS_CHILD, 1050, 10, 120, 30, hWnd, (HMENU)ADD_AIRPORT, NULL, NULL);
+	CreateWindowW(_T("Button"), _T("Add Airport"), WS_VISIBLE | WS_CHILD , 1050, 10, 120, 30, hWnd, (HMENU)ADD_AIRPORT, NULL, NULL);
 
 	main_struct->list_info_text_field =
-		CreateWindowW(_T("EDIT"), 0, WS_VISIBLE | WS_CHILD | WS_BORDER, 1050, 50, 380, 440, hWnd, NULL, hInstance, NULL);
+		CreateWindowW(_T("Edit"), 0, WS_VISIBLE | WS_CHILD | WS_BORDER | WS_HSCROLL |
+			WS_VSCROLL | ES_LEFT | ES_MULTILINE |
+			ES_AUTOHSCROLL | ES_AUTOVSCROLL, 1050, 50, 380, 440, hWnd, NULL, hInstance, NULL);
 
 	CreateWindowW(_T("Button"), _T("List Airports"), WS_VISIBLE | WS_CHILD, 1050, 500, 120, 30, hWnd, (HMENU)LIST_AIRPORTS, NULL, NULL);
 	CreateWindowW(_T("Button"), _T("List Planes"), WS_VISIBLE | WS_CHILD, 1172, 500, 120, 30, hWnd, (HMENU)LIST_PLANES, NULL, NULL);
 	CreateWindowW(_T("Button"), _T("List Passangers"), WS_VISIBLE | WS_CHILD, 1294, 500, 120, 30, hWnd, (HMENU)LIST_PASSANGERS, NULL, NULL);
 	CreateWindowW(_T("Button"), _T("Accept"), WS_VISIBLE | WS_CHILD, 1050, 532, 120, 30, hWnd, (HMENU)ACCEPT, NULL, NULL);
+}
+
+TSTRING print_airports(ControlMain* control)
+{
+	tstringstream stream;
+	
+	for (auto pair : control->airports) {
+		Airport* airport = pair.second;
+		stream << _T("Airport -> name : ") << airport->name << _T("\tposition : ") << airport->position.x << _T(", ") << airport->position.y << END_LINE;
+
+		for (Plane* plane : airport->planes) {
+			auto list = control->get_passengers_on_plane(plane->offset);
+			stream << _T("\r\tPlane -> offset : ") << plane->offset <<
+				_T(" , max passangers : ") << plane->max_passengers <<
+				_T(" , velocity : ") << plane->velocity <<
+				_T(" , passagers : ") << (list == nullptr ? 0 : list->size()) << END_LINE;
+		}
+
+
+	}
+
+	return stream.str();
+}
+
+TSTRING print_planes(ControlMain* control)
+{
+	tstringstream stream;
+	for (int i = 0; i < control->shared_control->max_plane_amount; i++) {
+		Plane* plane = &control->planes[i];
+
+		const auto list = control->get_passengers_on_plane(plane->offset);
+
+		if (plane->in_use) {
+			//stream << _T("\t");
+			stream << _T("\n\tPlane -> offset : ") << plane->offset <<
+				_T(" , max passangers : ") << plane->max_passengers <<
+				_T(" , velocity : ") << plane->velocity <<
+				_T(" , passagers : ") << (list == nullptr ? 0 : list->size());
+
+			if (plane->is_flying) {
+				stream << _T(", the plane is flying from '") << control->get_airport(plane->origin_airport_id)->name <<
+					_T("', to '") << control->get_airport(plane->destiny_airport_id)->name <<
+					_T("', current position : ") << plane->position.x << _T(",") << plane->position.y << END_LINE;
+
+			}
+			else {
+				stream << _T(", airport: ") << control->get_airport(plane->origin_airport_id)->name << END_LINE;
+			}
+		}
+	}
+	return stream.str();
+}
+TSTRING print_passengers(ControlMain* control)
+{
+	tstringstream stream;
+	for (auto passenger : control->all_passengers)
+	{
+		stream << _T("id: ") << passenger.second->id
+			<< _T(", name: ") << passenger.second->name
+			<< _T(", origin: ") << passenger.second->origin->name
+			<< _T(", destiny:") << passenger.second->destiny->name << END_LINE;
+	}
+
+	return stream.str();
 }
