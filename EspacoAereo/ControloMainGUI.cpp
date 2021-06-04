@@ -17,6 +17,10 @@
 #define ACCEPT 5
 
 
+
+#define END_LINE _T("\r\n")
+
+
 #define TSTRING std::basic_string<TCHAR>
 
 #ifdef UNICODE
@@ -36,14 +40,12 @@ typedef struct {
 
 	ControlMain* control;
 } HANDLES_N_STUFF;
-
-
 HANDLES_N_STUFF stuff;
+
+void AddControls(HWND hWnd, HINSTANCE hInstance, HANDLES_N_STUFF* main_struct);
 
 LRESULT CALLBACK window_event_handler(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK map_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-void AddControls(HWND, HINSTANCE, HANDLES_N_STUFF*);
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nCmdShow) {
 	HWND hWnd;
@@ -100,21 +102,6 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 }
 
 
-DWORD WINAPI draw_map(HBITMAP h_bitmap, HDC dc, ControlMain* control) {
-
-	for (auto airport : control->airports) {
-		draw_airport(h_bitmap, dc, airport.second->position);
-	}
-
-	for (int i = 0; i < control->shared_control->max_plane_amount; i++) {
-		auto plane = control->get_plane(i);
-		if (plane->in_use && plane->is_flying) {
-			draw_plane(h_bitmap, dc, plane->position);
-		}
-	}
-	return 0;
-}
-
 LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 	HANDLES_N_STUFF* main_struct = nullptr;
@@ -150,24 +137,25 @@ LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 				}
 
 				case LIST_AIRPORTS: {
-					tstringstream stream;
-					for (auto pair : main_struct->control->airports) {
-						Airport* airport = pair.second;
-						stream << _T("Airport -> name : ") << airport->name << _T("\tposition : ") << airport->position.x << _T(", ") << airport->position.y;
-					}
-
-					TSTRING str = stream.str();
+					TSTRING str = print_airports(main_struct->control);
 					SetWindowText(main_struct->list_info_text_field, str.c_str());
 					break;
 				}
-				case LIST_PLANES:
 
+				case LIST_PLANES: {
+					TSTRING str = print_planes(main_struct->control);
+					SetWindowText(main_struct->list_info_text_field, str.c_str());
 					break;
-				case LIST_PASSANGERS:
+				}
 
+				case LIST_PASSANGERS: {
+					TSTRING str = print_passengers(main_struct->control);
+					SetWindowText(main_struct->list_info_text_field, str.c_str());
 					break;
+				}
+
 				case ACCEPT:
-
+					//TODO accept part
 					break;
 			}
 			break;
@@ -176,19 +164,20 @@ LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 				PostQuitMessage(0);
 			}
 			break;
-		case WM_CREATE: {
+		case WM_CREATE:
 			AddControls(hWnd, main_struct->hInstance, main_struct);
 			break;
-		}
+		
 		default:
 			return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
+	return TRUE;
 }
 
 void AddControls(HWND hWnd, HINSTANCE hInstance, HANDLES_N_STUFF* main_struct) {
 
 	main_struct->map_area =
-		CreateWindowW(_T("static"), _T(""), WS_VISIBLE | WS_CHILD | WS_BORDER,
+		CreateWindowW(_T("Static"), _T(""), WS_VISIBLE | WS_CHILD | WS_BORDER,
 					  0, 0, MAP_SIZE, MAP_SIZE, hWnd, NULL, NULL, NULL);
 	SetWindowLongPtr(main_struct->map_area, GWLP_WNDPROC, (LONG_PTR)map_event_handler);
 
@@ -199,7 +188,9 @@ void AddControls(HWND hWnd, HINSTANCE hInstance, HANDLES_N_STUFF* main_struct) {
 	CreateWindowW(_T("Button"), _T("Add Airport"), WS_VISIBLE | WS_CHILD, 1050, 10, 120, 30, hWnd, (HMENU)ADD_AIRPORT, NULL, NULL);
 
 	main_struct->list_info_text_field =
-		CreateWindowW(_T("EDIT"), 0, WS_VISIBLE | WS_CHILD | WS_BORDER, 1050, 50, 380, 440, hWnd, NULL, hInstance, NULL);
+		CreateWindowW(_T("Edit"), 0, WS_VISIBLE | WS_CHILD | WS_BORDER | WS_HSCROLL |
+					  WS_VSCROLL | ES_LEFT | ES_MULTILINE |
+					  ES_AUTOHSCROLL | ES_AUTOVSCROLL, 1050, 50, 380, 440, hWnd, NULL, hInstance, NULL);
 
 	CreateWindowW(_T("Button"), _T("List Airports"), WS_VISIBLE | WS_CHILD, 1050, 500, 120, 30, hWnd, (HMENU)LIST_AIRPORTS, NULL, NULL);
 	CreateWindowW(_T("Button"), _T("List Planes"), WS_VISIBLE | WS_CHILD, 1172, 500, 120, 30, hWnd, (HMENU)LIST_PLANES, NULL, NULL);
@@ -207,19 +198,17 @@ void AddControls(HWND hWnd, HINSTANCE hInstance, HANDLES_N_STUFF* main_struct) {
 	CreateWindowW(_T("Button"), _T("Accept"), WS_VISIBLE | WS_CHILD, 1050, 532, 120, 30, hWnd, (HMENU)ACCEPT, NULL, NULL);
 }
 
-
-
 LRESULT CALLBACK map_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 	HANDLES_N_STUFF* main_struct = nullptr;
 	main_struct = &stuff;
 
-	static HDC double_buffer_dc_to_delete;
+	static HDC double_buffer_dc_to_delete; //TODO get rid of this stupid shit
 	static HBITMAP  double_buffer_bitmap_to_delete;
 
 
 	switch (msg) {
-	
+
 		case WM_ERASEBKGND:
 			break;
 
@@ -236,12 +225,12 @@ LRESULT CALLBACK map_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
 
 			SelectObject(double_buffer_dc, GetStockObject(WHITE_BRUSH));
 			PatBlt(double_buffer_dc, 0, 0, MAP_SIZE, MAP_SIZE, PATCOPY);
-
+			//TODO make this make sense
 			SelectObject(double_buffer_dc, GetStockObject(GRAY_BRUSH));
 
 			//TODO make this be called from somewhere else
 			draw_map(double_buffer_bitmap, double_buffer_dc, main_struct->control);
-			
+
 
 			BitBlt(hdc, 0, 0, MAP_SIZE, MAP_SIZE, double_buffer_dc, 0, 0, SRCCOPY);
 
@@ -255,5 +244,5 @@ LRESULT CALLBACK map_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
 		default:
 			return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
-
+	return TRUE;
 }
