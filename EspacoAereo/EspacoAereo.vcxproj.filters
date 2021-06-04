@@ -51,6 +51,9 @@
     <ClCompile Include="StartException.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="UIDrawFunctions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Airport.h">
@@ -90,6 +93,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="StartException.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIDrawFunctions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

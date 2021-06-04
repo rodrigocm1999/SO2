@@ -152,6 +152,7 @@
     <ClCompile Include="RegistryStuff.cpp" />
     <ClCompile Include="StartException.cpp" />
     <ClCompile Include="TextInterface.cpp" />
+    <ClCompile Include="UIDrawFunctions.cpp" />
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -167,6 +168,7 @@
     <ClInclude Include="SharedStructContents.h" />
     <ClInclude Include="StartException.h" />
     <ClInclude Include="TextInterface.h" />
+    <ClInclude Include="UIDrawFunctions.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
