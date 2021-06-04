@@ -147,6 +147,7 @@
     <ClCompile Include="Controlo.cpp" />
     <ClCompile Include="ControlMain.cpp" />
     <ClCompile Include="ControloMainGUI.cpp" />
+    <ClCompile Include="MainBreakdown.cpp" />
     <ClCompile Include="Passenger.cpp" />
     <ClCompile Include="RegistryStuff.cpp" />
     <ClCompile Include="TextInterface.cpp" />
@@ -157,6 +158,7 @@
     <ClInclude Include="CircularBuffer.h" />
     <ClInclude Include="ControlFunctions.h" />
     <ClInclude Include="ControlMain.h" />
+    <ClInclude Include="MainBreakdown.h" />
     <ClInclude Include="Passenger.h" />
     <ClInclude Include="RegistryStuff.h" />
     <ClInclude Include="resource.h" />

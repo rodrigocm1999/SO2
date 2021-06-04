@@ -1,8 +1,5 @@
 #include <windows.h>
 #include <tchar.h>
-
-#include "ControlFunctions.h"
-#include "MainBreakdown.h"
 #include "resource.h" //1º passo
 
 #define ADD_AIRPORT 1
@@ -16,11 +13,7 @@
 
 typedef struct {
 	HINSTANCE hInstance;
-
 	HWND airport_name_text_field;
-	HWND map_area;
-
-	ControlMain* control;
 } HANDLES_N_STUFF;
 
 
@@ -33,97 +26,84 @@ void AddControls(HWND, HANDLES_N_STUFF*);
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nCmdShow) {
 	HWND hWnd;
 	MSG msg = { 0 };
-	WNDCLASSEX window_app = { 0 };
+	WNDCLASSA window_app = { 0 };
 
-	HANDLE process_lock_mutex = lock_process();
-
-
-	ControlMain* control_main = main_start();
-	if (control_main == nullptr) {
-		CloseHandle(process_lock_mutex);
-		return -1;
-	}
-
-	startAllThreads(control_main);
-
-	window_app.cbSize = sizeof(WNDCLASSEX);
+	TCHAR* window_name = _T("Controlo Aeroporto");
+	
+	//window_app.cbSize = sizeof(WNDCLASSEX);
+	
 	window_app.hbrBackground = (HBRUSH)COLOR_WINDOW;
-	window_app.hCursor = LoadCursor(nullptr, IDC_ARROW);
+	window_app.hCursor = LoadCursor(NULL, IDC_ARROW);
 	window_app.hInstance = hInst;
-	window_app.lpszClassName = _T("windowClass");
+	window_app.lpszClassName = window_name;
 	window_app.lpfnWndProc = window_procedure;
-
+	
 	window_app.cbWndExtra = sizeof(HANDLES_N_STUFF*);
 
-	if (!RegisterClassEx(&window_app)) {
-		CloseHandle(process_lock_mutex);
-		return -1;
+	if (!RegisterClassA(&window_app))
+		return GetLastError();
+	
+	hWnd = CreateWindow(window_name, _T("Controlo"), WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+						0, 0, 1500, 1050, HWND_DESKTOP, NULL, hInst, 0);
+	
+	int error_debug = GetLastError();
+
+	HANDLES_N_STUFF structure;
+	if (SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)&structure) == 0) {
+		return GetLastError();
 	}
 	
-	hWnd = CreateWindow(_T("windowClass"), _T("Controlo"), WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-						-10, 0, 1500, 1050, HWND_DESKTOP, NULL, hInst, 0);
+	ShowWindow(hWnd, nCmdShow);
+	UpdateWindow(hWnd);
 
-	if (hWnd != nullptr) {
-		//SetWindowLongPtr(hWnd, 0, (LONG_PTR)&structure); // TODO make this works
-		stuff.control = control_main;
-
-		while (GetMessage(&msg, NULL, NULL, NULL)) {
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
+	while (GetMessage(&msg, NULL, 0, 0)) {
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
 	}
 
-	exit_everything(control_main);
-	waitForThreadsToFinish(control_main);
-
-	exitAndSendSentiment(control_main);
-
-	delete control_main;
-	CloseHandle(process_lock_mutex);
-
-	return 0;
+	return (int)msg.wParam;
 }
 
 LRESULT CALLBACK window_procedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-
-	HANDLES_N_STUFF* main_struct = nullptr;
-
-	//main_struct = (HANDLES_N_STUFF*)GetWindowLongPtr(hWnd, 0); // TODO ERROR FIX - o GetWindowLongPtr está a retornar NULL
+	HANDLES_N_STUFF* main_struct = NULL;
 	main_struct = &stuff;
+	//main_struct = (HANDLES_N_STUFF*)GetWindowLongPtr(hWnd, GWLP_USERDATA); // TODO ERROR FIX - o GetWindowLongPtr está a retornar 
 	main_struct->hInstance = GetModuleHandle(NULL);
+	
 
 	switch (msg) {
 		case WM_COMMAND:
 			switch (wParam) {
-				case ADD_AIRPORT:
+				case ADD_AIRPORT: {
 					TCHAR text[100];
 					GetWindowTextW(main_struct->airport_name_text_field, text, sizeof(text));
-					SetWindowTextW(main_struct->map_area, text);
+					SetWindowTextW(hWnd, text);
 					break;
+				}
 			}
 
 			break;
 		case WM_CLOSE:
-			if (MessageBox(hWnd, _T("Are you sure you want to exit?"), _T("Exit"), MB_YESNO) == IDYES) {
+			if (MessageBox(hWnd, _T("Será?"), _T("sike"), MB_YESNO) == IDYES) {
 				PostQuitMessage(0);
 			}
 			break;
+
 		case WM_CREATE:
 			AddControls(hWnd, main_struct);
 			break;
 		default:
 			return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
+	return 0;
 }
 
 void AddControls(HWND hWnd, HANDLES_N_STUFF* main_struct) {
-
 	HINSTANCE hInstance = main_struct->hInstance;
 
 	//TODO adicionar os handles e merdas na struct e meter pa dentro
-	main_struct->map_area =
-		CreateWindowW(_T("static"), _T("isto vai ser o mapa e esta feito 1000x1000 "), WS_VISIBLE | WS_CHILD | WS_BORDER,
-					  20, 1, 1000, 1000, hWnd, NULL, NULL, NULL);
+	CreateWindowW(_T("static"), _T("isto vai ser o mapa e esta feito 1000x1000 "), WS_VISIBLE | WS_CHILD | WS_BORDER,
+				  20, 1, 1000, 1000, hWnd, NULL, NULL, NULL);
 
 	main_struct->airport_name_text_field =
 		CreateWindowW(_T("EDIT"), 0, WS_VISIBLE | WS_CHILD | WS_BORDER, 1172, 10, 250, 30, hWnd, NULL, hInstance, NULL);
@@ -134,7 +114,8 @@ void AddControls(HWND hWnd, HANDLES_N_STUFF* main_struct) {
 
 	CreateWindowW(_T("Button"), _T("List Airports"), WS_VISIBLE | WS_CHILD, 1050, 500, 120, 30, hWnd, NULL, NULL, NULL);
 	CreateWindowW(_T("Button"), _T("List Planes"), WS_VISIBLE | WS_CHILD, 1172, 500, 120, 30, hWnd, NULL, NULL, NULL);
-	CreateWindowW(_T("Button"), _T("List Passangers"), WS_VISIBLE | WS_CHILD, 1294, 500, 120, 30, hWnd, NULL, NULL, NULL);
+	CreateWindowW(_T("Button"), _T("List Passangers"), WS_VISIBLE | WS_CHILD, 1294, 500, 120, 30, hWnd, NULL, NULL,
+				  NULL);
 	CreateWindowW(_T("Button"), _T("Accept"), WS_VISIBLE | WS_CHILD, 1050, 532, 120, 30, hWnd, NULL, NULL, NULL);
 }
 
