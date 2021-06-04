@@ -41,6 +41,7 @@ typedef struct {
 HANDLES_N_STUFF stuff;
 
 LRESULT CALLBACK window_event_handler(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK map_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 void AddControls(HWND, HINSTANCE, HANDLES_N_STUFF*);
 
@@ -100,10 +101,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 
 
 DWORD WINAPI draw_map(HBITMAP h_bitmap, HDC dc, ControlMain* control) {
-	SelectObject(dc, h_bitmap);
 
-	TextOut(dc, 10, 10, _T("Eyeedsasdasdasdasdasdaasdasdasd"), 1);
-	
 	for (auto airport : control->airports) {
 		draw_airport(h_bitmap, dc, airport.second->position);
 	}
@@ -117,13 +115,9 @@ DWORD WINAPI draw_map(HBITMAP h_bitmap, HDC dc, ControlMain* control) {
 	return 0;
 }
 
-
 LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 	HANDLES_N_STUFF* main_struct = nullptr;
-
-	static HDC double_buffer_dc;
-	static HBITMAP double_buffer_bitmap;
 
 	//main_struct = (HANDLES_N_STUFF*)GetWindowLongPtr(hWnd, 0); // TODO ERROR FIX - o GetWindowLongPtr está a retornar NULL
 	main_struct = &stuff;
@@ -133,7 +127,7 @@ LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 		case WM_COMMAND:
 			switch (wParam) {
 				case ADD_AIRPORT: {
-					InvalidateRect(hWnd, nullptr, false);
+					InvalidateRect(main_struct->map_area, nullptr, false);
 
 					TCHAR text[100];
 					GetWindowText(main_struct->airport_name_text_field, text, sizeof(text));
@@ -182,35 +176,8 @@ LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 				PostQuitMessage(0);
 			}
 			break;
-		case WM_DESTROY:
-			DeleteObject(double_buffer_bitmap);
-			DeleteDC(double_buffer_dc);
-			break;
 		case WM_CREATE: {
 			AddControls(hWnd, main_struct->hInstance, main_struct);
-
-			HDC dc = GetDC(hWnd);
-			double_buffer_dc = CreateCompatibleDC(dc);
-			double_buffer_bitmap = CreateCompatibleBitmap(dc, MAP_SIZE, MAP_SIZE);
-			SelectObject(double_buffer_dc, double_buffer_bitmap);
-
-			SelectObject(double_buffer_dc, GetStockObject(BLACK_BRUSH));
-			PatBlt(double_buffer_dc, 0, 0, MAP_SIZE, MAP_SIZE, PATCOPY);
-
-			break;
-		}
-		case WM_ERASEBKGND:
-			break;
-		case WM_PAINT: {
-			PAINTSTRUCT paint_struct;
-			const HDC hdc = BeginPaint(hWnd, &paint_struct);
-
-			//TODO make this be called from somewhere else
-			draw_map(double_buffer_bitmap, double_buffer_dc, main_struct->control);
-
-			BitBlt(hdc, 0, 0, 1000, 1000, double_buffer_dc, 0, 0, SRCCOPY);
-
-			EndPaint(hWnd, &paint_struct);
 			break;
 		}
 		default:
@@ -223,6 +190,8 @@ void AddControls(HWND hWnd, HINSTANCE hInstance, HANDLES_N_STUFF* main_struct) {
 	main_struct->map_area =
 		CreateWindowW(_T("static"), _T(""), WS_VISIBLE | WS_CHILD | WS_BORDER,
 					  0, 0, MAP_SIZE, MAP_SIZE, hWnd, NULL, NULL, NULL);
+	SetWindowLongPtr(main_struct->map_area, GWLP_WNDPROC, (LONG_PTR)map_event_handler);
+
 
 	main_struct->airport_name_text_field =
 		CreateWindowW(_T("EDIT"), 0, WS_VISIBLE | WS_CHILD | WS_BORDER, 1172, 10, 250, 30, hWnd, NULL, hInstance, NULL);
@@ -236,4 +205,55 @@ void AddControls(HWND hWnd, HINSTANCE hInstance, HANDLES_N_STUFF* main_struct) {
 	CreateWindowW(_T("Button"), _T("List Planes"), WS_VISIBLE | WS_CHILD, 1172, 500, 120, 30, hWnd, (HMENU)LIST_PLANES, NULL, NULL);
 	CreateWindowW(_T("Button"), _T("List Passangers"), WS_VISIBLE | WS_CHILD, 1294, 500, 120, 30, hWnd, (HMENU)LIST_PASSANGERS, NULL, NULL);
 	CreateWindowW(_T("Button"), _T("Accept"), WS_VISIBLE | WS_CHILD, 1050, 532, 120, 30, hWnd, (HMENU)ACCEPT, NULL, NULL);
+}
+
+
+
+LRESULT CALLBACK map_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+
+	HANDLES_N_STUFF* main_struct = nullptr;
+	main_struct = &stuff;
+
+	static HDC double_buffer_dc_to_delete;
+	static HBITMAP  double_buffer_bitmap_to_delete;
+
+
+	switch (msg) {
+	
+		case WM_ERASEBKGND:
+			break;
+
+		case WM_PAINT: {
+			PAINTSTRUCT paint_struct;
+			const HDC hdc = BeginPaint(hWnd, &paint_struct);
+
+			static HDC double_buffer_dc = CreateCompatibleDC(hdc);
+			static HBITMAP  double_buffer_bitmap = CreateCompatibleBitmap(hdc, MAP_SIZE, MAP_SIZE);
+			double_buffer_dc_to_delete = double_buffer_dc;
+			double_buffer_bitmap_to_delete = double_buffer_bitmap_to_delete;
+
+			SelectObject(double_buffer_dc, double_buffer_bitmap);
+
+			SelectObject(double_buffer_dc, GetStockObject(WHITE_BRUSH));
+			PatBlt(double_buffer_dc, 0, 0, MAP_SIZE, MAP_SIZE, PATCOPY);
+
+			SelectObject(double_buffer_dc, GetStockObject(GRAY_BRUSH));
+
+			//TODO make this be called from somewhere else
+			draw_map(double_buffer_bitmap, double_buffer_dc, main_struct->control);
+			
+
+			BitBlt(hdc, 0, 0, MAP_SIZE, MAP_SIZE, double_buffer_dc, 0, 0, SRCCOPY);
+
+			EndPaint(hWnd, &paint_struct);
+			break;
+		}
+		case WM_DESTROY:
+			DeleteDC(double_buffer_dc_to_delete);
+			DeleteObject(double_buffer_bitmap_to_delete);
+			break;
+		default:
+			return DefWindowProc(hWnd, msg, wParam, lParam);
+	}
+
 }
