@@ -17,6 +17,7 @@
 #include "ControlMain.h"
 #include "ControlFunctions.h"
 #include "MainBreakdown.h"
+#include "StartException.h"
 
 using namespace std;
 
@@ -35,26 +36,30 @@ int _tmain(int argc, TCHAR** argv) {
 	val = _setmode(_fileno(stderr), _O_WTEXT);
 #endif
 
-	HANDLE process_lock_mutex = lock_process();
+	HANDLE process_lock_mutex = nullptr;
 
+	try {
+		process_lock_mutex = lock_process();
 
-	ControlMain* control_main = main_start();
-	if (control_main == nullptr) {
-		CloseHandle(process_lock_mutex);
-		return -1;
+		ControlMain* control_main = main_start();
+
+		tcout << _T("Max planes from registry : ") << control_main->shared_control->max_plane_amount << endl;
+
+		startAllThreads(control_main);
+		control_main->interface_thread = create_thread(enter_text_interface, control_main);
+
+		waitForThreadsToFinish(control_main);
+		WaitForSingleObject(control_main->interface_thread, INFINITE);
+
+		exitAndSendSentiment(control_main);
+
+		delete control_main;
+
+	} catch (StartException* e) {
+		tcout << _T("ERROR -> ") << e->get_message() << endl;
+		delete e;
 	}
-
-	startAllThreads(control_main);
-	control_main->interface_thread = create_thread(enter_text_interface, control_main);
-
-	waitForThreadsToFinish(control_main);
-	WaitForSingleObject(control_main->interface_thread, INFINITE);
-
-	exitAndSendSentiment(control_main);
-
-
-	delete control_main;
-	//------------------------------------------------------------------------------------
+	
 
 	CloseHandle(process_lock_mutex);
 

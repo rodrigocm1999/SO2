@@ -14,3 +14,5 @@ void startAllThreads(ControlMain* control_main);
 ControlMain* main_start();
 
 HANDLE lock_process();
+
+void* allocate_shared_memory(HANDLE& mapped_file, DWORD size);

@@ -150,6 +150,7 @@
     <ClCompile Include="MainBreakdown.cpp" />
     <ClCompile Include="Passenger.cpp" />
     <ClCompile Include="RegistryStuff.cpp" />
+    <ClCompile Include="StartException.cpp" />
     <ClCompile Include="TextInterface.cpp" />
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
@@ -164,6 +165,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="SharedPassagStruct.h" />
     <ClInclude Include="SharedStructContents.h" />
+    <ClInclude Include="StartException.h" />
     <ClInclude Include="TextInterface.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>

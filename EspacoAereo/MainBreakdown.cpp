@@ -1,23 +1,30 @@
 #include "MainBreakdown.h"
 
 #include <iostream>
+#include <sstream>
 
 #include "ControlFunctions.h"
 #include "RegistryStuff.h"
-#include "TextInterface.h"
+#include "StartException.h"
 #include "Utils.h"
 
 using namespace std;
 
+#define TSTRING std::basic_string<TCHAR>
+
 #ifdef UNICODE
-#define tcout std::wcout
+#define tcout wcout
+#define tcin wcin
+#define tstringstream wstringstream
 #else
-#define tcout std::cout
+#define tcout cout
+#define tcin cin
+#define tstringstream stringstream
 #endif
 
 void waitForThreadsToFinish(ControlMain* control_main) {
 	// Wait for them to finish -----------------------------------------------------------
-	const int handle_amount = 4;
+	const int handle_amount = 3;
 	HANDLE handles[] = { control_main->receiving_thread ,control_main->heartbeat_thread ,control_main->passenger_receiver };
 	WaitForMultipleObjects(handle_amount, handles, true, INFINITE);
 	//------------------------------------------------------------------------------------	
@@ -42,7 +49,7 @@ void exitAndSendSentiment(ControlMain* control_main){
 
 			// if Plane flying warn all passengers that it went down
 			if (plane->is_flying) {
-				auto passengers = control_main->boarded_passengers_map[plane->offset];
+				const auto passengers = control_main->boarded_passengers_map[plane->offset];
 
 				for (auto passenger_id : *passengers) {
 					auto passenger = control_main->get_passenger_by_id(passenger_id);
@@ -73,14 +80,14 @@ void startAllThreads(ControlMain* control_main) {
 }
 
 ControlMain* main_start() {
+	tstringstream stream;
 	//Get max planes amount from registry ------------------------------------
 	int max_planes = get_max_planes_from_registry();
-	tcout << _T("Max planes from registry : ") << max_planes << endl;
 	//Create Semaphore that control max planes at a moment
 	HANDLE planes_semaphore = CreateSemaphoreW(nullptr, max_planes, max_planes, SEMAPHORE_MAX_PLANES);
 	if (planes_semaphore == nullptr) {
-		tcout << _T("Semaphore already exists -> ") << GetLastError() << endl;
-		return nullptr;
+		stream << _T("Semaphore already exists -> ") << GetLastError() << endl;
+		throw new StartException(&stream);
 	}
 	// -----------------------------------------------------------------------
 
@@ -89,9 +96,9 @@ ControlMain* main_start() {
 															 PIPE_WAIT | PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, PIPE_UNLIMITED_INSTANCES,
 															 0, sizeof(PassengerMessage), 1000, nullptr);
 	if (handle_control_named_pipe == INVALID_HANDLE_VALUE) {
-		tcout << _T("Error creating named pipe -> ") << GetLastError() << endl;
+		stream << _T("Error creating named pipe -> ") << GetLastError() << endl;
 		CloseHandle(planes_semaphore);
-		return nullptr;
+		throw new StartException(&stream);
 	}
 	// -----------------------------------------------------------------------
 
@@ -99,11 +106,14 @@ ControlMain* main_start() {
 	const DWORD shared_memory_size = sizeof(SharedControl) + sizeof(Plane) * max_planes; //Soma do espaço necessário a alocar
 
 	HANDLE handle_mapped_file;
-	void* shared_mem_pointer = allocate_shared_memory(handle_mapped_file, shared_memory_size);
-	if (shared_mem_pointer == NULL) {
+	void* shared_mem_pointer;
+	
+	try {
+		shared_mem_pointer = allocate_shared_memory(handle_mapped_file, shared_memory_size);
+	} catch (StartException* e) {
 		CloseHandle(planes_semaphore);
 		CloseHandle(handle_control_named_pipe);
-		return nullptr;
+		throw e;
 	}
 	//------------------------------------------------------------------------------------
 
@@ -122,18 +132,37 @@ ControlMain* main_start() {
 }
 
 HANDLE lock_process() {
+	tstringstream stream;
 	//Check if is already running --------------------------------------------
 	HANDLE process_lock_mutex = CreateMutexW(0, FALSE, _T("Airport_Control"));
 	// Tries to create a mutex with the specified name
-	// If the application is already running it cant create another mutex with the same name
 	if (process_lock_mutex == nullptr) {
-		tcout << _T("Process lock mutex error creating : ") << GetLastError() << endl;
-		return nullptr;
+		stream << _T("Process lock mutex error creating : ") << GetLastError() << endl;
+		throw new StartException(&stream);
 	}
+	// If the application is already running it cant create another mutex with the same name
 	if (GetLastError() == ERROR_ALREADY_EXISTS) {
-		tcout << _T("Process already running\n");
-		return nullptr;
+		stream << _T("Process already running\n");
+		throw new StartException(&stream);
 	}
-	// -----------------------------------------------------------------------
 	return process_lock_mutex;
+}
+
+void* allocate_shared_memory(HANDLE& mapped_file, DWORD size) {
+	tstringstream stream;
+	mapped_file = CreateFileMapping(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0, size, MAPPED_MEMORY_IDENTIFIER);
+
+	if (mapped_file == nullptr) {
+		stream << _T("Could not create file mapping object -> ") << GetLastError();
+		throw new StartException(&stream);
+	}
+	void* shared_mem_pointer = MapViewOfFile(mapped_file, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+
+	if (shared_mem_pointer == nullptr) {
+		stream << _T("Could not map view of file ->") << GetLastError() << endl;
+		CloseHandle(mapped_file);
+		throw new StartException(&stream);
+	}
+
+	return shared_mem_pointer;
 }

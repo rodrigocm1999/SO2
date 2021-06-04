@@ -4,6 +4,7 @@
 #include "ControlFunctions.h"
 #include "MainBreakdown.h"
 #include "resource.h" //1º passo
+#include "StartException.h"
 
 #define ADD_AIRPORT 1
 #define LIST_AIRPORTS 2
@@ -35,17 +36,6 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	MSG msg = { 0 };
 	WNDCLASSEX window_app = { 0 };
 
-	HANDLE process_lock_mutex = lock_process();
-
-
-	ControlMain* control_main = main_start();
-	if (control_main == nullptr) {
-		CloseHandle(process_lock_mutex);
-		return -1;
-	}
-
-	startAllThreads(control_main);
-
 	window_app.cbSize = sizeof(WNDCLASSEX);
 	window_app.hbrBackground = (HBRUSH)COLOR_WINDOW;
 	window_app.hCursor = LoadCursor(nullptr, IDC_ARROW);
@@ -55,30 +45,42 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 
 	window_app.cbWndExtra = sizeof(HANDLES_N_STUFF*);
 
-	if (!RegisterClassEx(&window_app)) {
-		CloseHandle(process_lock_mutex);
+	if (!RegisterClassEx(&window_app))
 		return -1;
-	}
-	
+
 	hWnd = CreateWindow(_T("windowClass"), _T("Controlo"), WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 						-10, 0, 1500, 1050, HWND_DESKTOP, NULL, hInst, 0);
 
-	if (hWnd != nullptr) {
-		//SetWindowLongPtr(hWnd, 0, (LONG_PTR)&structure); // TODO make this works
-		stuff.control = control_main;
+	HANDLE process_lock_mutex = nullptr;
+	try {
+		HANDLE process_lock_mutex = lock_process();
 
-		while (GetMessage(&msg, NULL, NULL, NULL)) {
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
+		ControlMain* control_main = main_start();
+
+		startAllThreads(control_main);
+
+
+		if (hWnd != nullptr) {
+			//SetWindowLongPtr(hWnd, 0, (LONG_PTR)&structure); // TODO make this works
+			stuff.control = control_main;
+
+			while (GetMessage(&msg, NULL, NULL, NULL)) {
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
 		}
+
+		exit_everything(control_main);
+		waitForThreadsToFinish(control_main);
+
+		exitAndSendSentiment(control_main);
+
+		delete control_main;
+	} catch (StartException* e) {
+		MessageBox(hWnd, e->get_message(), _T("Error"), MB_OK);
+		delete e;
 	}
-
-	exit_everything(control_main);
-	waitForThreadsToFinish(control_main);
-
-	exitAndSendSentiment(control_main);
-
-	delete control_main;
+	
 	CloseHandle(process_lock_mutex);
 
 	return 0;
