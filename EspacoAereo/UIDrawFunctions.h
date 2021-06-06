@@ -27,6 +27,7 @@ typedef struct {
 	
 	HWND airport_name_text_field;
 	HWND list_info_text_field;
+	HWND accept_window;
 
 	HBITMAP airport_icon;
 	HBITMAP plane_icon;

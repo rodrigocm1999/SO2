@@ -16,6 +16,8 @@ public:
 
 	bool exit = false;
 
+	bool accept_state = true;
+
 	unsigned int airport_counter = 0;
 	std::unordered_map<AIRPORT_ID, Airport*> airports;
 
