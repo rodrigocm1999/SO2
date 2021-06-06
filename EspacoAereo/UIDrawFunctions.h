@@ -22,29 +22,31 @@
 typedef struct {
 	HINSTANCE hInstance;
 
-	HWND airport_name_text_field;
+	HWND window;
 	HWND map_area;
+	
+	HWND airport_name_text_field;
 	HWND list_info_text_field;
 
 	HBITMAP airport_icon;
 	HBITMAP plane_icon;
-	
+
+
+	HANDLE draw_thread_handle;
+	HDC double_buffer_dc;
+	HBITMAP double_buffer_bitmap;
+
 	ControlMain* control;
 } HANDLES_N_STUFF;
-
-typedef struct {
-	HDC bitmap_dc;
-	HANDLES_N_STUFF* handles;
-}ToDrawThread;
 
 
 #define ICON_SIZE 28
 #define REFRESH_WAIT 1000
 
-
-DWORD WINAPI draw_map(HDC bitmap_dc, HANDLES_N_STUFF* handles);
 DWORD WINAPI draw_map_thread(LPVOID param);
 
+void update_map_area(HANDLES_N_STUFF* stuff);
+void draw_map(HDC bitmap_dc, HANDLES_N_STUFF* handles);
 void draw_img(HBITMAP h_bitmap, HDC bitmap_dc, HDC aux_dc, const Position& pos);
 
 TSTRING print_airports(ControlMain* control);

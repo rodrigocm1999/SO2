@@ -57,11 +57,10 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 
 	hWnd = CreateWindow(_T("windowClass"), _T("Controlo"), WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 						-10, 0, 1500, 1050, HWND_DESKTOP, NULL, hInst, 0);
-
-	stuff.plane_icon = LoadBitmap(hInst, MAKEINTRESOURCE(IDB_PLANEICON));
-	stuff.airport_icon = LoadBitmap(hInst, MAKEINTRESOURCE(IDB_AIRPORTICON));
-
+	stuff.window = hWnd;
+	
 	if (hWnd != nullptr) {
+
 		HANDLE process_lock_mutex = nullptr;
 		try {
 			process_lock_mutex = lock_process();
@@ -70,10 +69,15 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 
 			startAllThreads(control_main);
 
-			//SetWindowLongPtr(hWnd, 0, (LONG_PTR)&structure); // TODO make this works
+			stuff.plane_icon = LoadBitmap(hInst, MAKEINTRESOURCE(IDB_PLANEICON));
+			stuff.airport_icon = LoadBitmap(hInst, MAKEINTRESOURCE(IDB_AIRPORTICON));
+
+			SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)&stuff); // TODO make this works
 			stuff.control = control_main;
 
-			while (GetMessage(&msg, NULL, NULL, NULL)) {
+			stuff.draw_thread_handle = create_thread(draw_map_thread, &stuff);
+			
+			while (GetMessage(&msg, nullptr, NULL, NULL)) {
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
@@ -92,7 +96,6 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 
 		CloseHandle(process_lock_mutex);
 	}
-
 	DeleteObject(stuff.plane_icon);
 	DeleteObject(stuff.airport_icon);
 
@@ -104,15 +107,15 @@ LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 
 	HANDLES_N_STUFF* main_struct = nullptr;
 
-	//main_struct = (HANDLES_N_STUFF*)GetWindowLongPtr(hWnd, 0); // TODO ERROR FIX - o GetWindowLongPtr está a retornar NULL
+	//main_struct = (HANDLES_N_STUFF*)GetWindowLongPtr(hWnd, GWLP_USERDATA); // TODO ERROR FIX - o GetWindowLongPtr está a retornar NULL
 	main_struct = &stuff;
-	main_struct->hInstance = GetModuleHandle(NULL);
+	main_struct->hInstance = GetModuleHandle(nullptr);
 
 	switch (msg) {
 		case WM_COMMAND:
 			switch (wParam) {
 				case ADD_AIRPORT: {
-					InvalidateRect(main_struct->map_area, nullptr, false);
+					update_map_area(main_struct);
 
 					TCHAR text[100];
 					GetWindowText(main_struct->airport_name_text_field, text, sizeof(text));
@@ -204,53 +207,38 @@ void AddControls(HWND hWnd, HINSTANCE hInstance, HANDLES_N_STUFF* main_struct) {
 
 LRESULT CALLBACK map_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	PAINTSTRUCT paint_struct;
-	HANDLES_N_STUFF* main_struct = nullptr;
-	main_struct = &stuff;
+	HANDLES_N_STUFF* main_struct = &stuff;
 
-	//static HDC double_buffer_dc_to_delete; //TODO get rid of this stupid shit
-	//static HBITMAP  double_buffer_bitmap_to_delete;
+	static bool already_created = false;
 
-	//static HANDLE draw_thread = create_thread(, handle); // TODO create the thread to update area every second
-	static HDC double_buffer_dc;
-	static HBITMAP  double_buffer_bitmap;
+	if (!already_created) {
+		already_created = true;
+
+		HDC hdc = BeginPaint(hWnd, &paint_struct);
+		main_struct->double_buffer_dc = CreateCompatibleDC(hdc);
+		main_struct->double_buffer_bitmap = CreateCompatibleBitmap(hdc, MAP_SIZE, MAP_SIZE);
+		SelectObject(main_struct->double_buffer_dc, main_struct->double_buffer_bitmap);
+
+		DeleteDC(hdc);
+		EndPaint(hWnd, &paint_struct);
+	}
 
 	switch (msg) {
-
-		case WM_NCCREATE: {
-			/*const HDC hdc = BeginPaint(hWnd, &paint_struct);
-			double_buffer_dc = CreateCompatibleDC(hdc);
-			double_buffer_bitmap = CreateCompatibleBitmap(hdc, MAP_SIZE, MAP_SIZE);
-			SelectObject(double_buffer_dc, double_buffer_bitmap);*/
-			break;
-		}
 		case WM_ERASEBKGND:
 			break;
+		
+		case WM_NCPAINT: {
+			HDC hdc = BeginPaint(hWnd, &paint_struct);
 
-		case WM_PAINT: {
-			const HDC hdc = BeginPaint(hWnd, &paint_struct);
+			BitBlt(hdc, 0, 0, MAP_SIZE, MAP_SIZE, main_struct->double_buffer_dc, 0, 0, SRCCOPY);
 
-			double_buffer_dc = CreateCompatibleDC(hdc);
-			double_buffer_bitmap = CreateCompatibleBitmap(hdc, MAP_SIZE, MAP_SIZE);
-			SelectObject(double_buffer_dc, double_buffer_bitmap);
-			//TODO lembrar como é que a stora fez o double buffer, será que é preciso andar sempre a criar bitmaps antes de mostrar? para isso mais vale tirar o bitmap
-
-
-			//Clear bitmap
-			SelectObject(double_buffer_dc, GetStockObject(WHITE_BRUSH));
-			PatBlt(double_buffer_dc, 0, 0, MAP_SIZE, MAP_SIZE, PATCOPY);
-
-
-			//TODO remove this after creating thread
-			draw_map(double_buffer_dc, main_struct);
-
-			BitBlt(hdc, 0, 0, MAP_SIZE, MAP_SIZE, double_buffer_dc, 0, 0, SRCCOPY);
-
+			DeleteDC(hdc);
 			EndPaint(hWnd, &paint_struct);
 			break;
 		}
-		case WM_DESTROY:
-			DeleteDC(double_buffer_dc);
-			DeleteObject(double_buffer_bitmap);
+		case WM_NCDESTROY:
+			DeleteDC(main_struct->double_buffer_dc);
+			DeleteObject(main_struct->double_buffer_bitmap);
 			break;
 		default:
 			return DefWindowProc(hWnd, msg, wParam, lParam);

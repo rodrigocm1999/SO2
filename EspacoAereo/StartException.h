@@ -14,10 +14,11 @@
 
 
 class StartException : std::exception {
-	TSTRING str;
+	TSTRING error_string;
 
 public:
 	StartException(tstringstream* stream);
+	StartException(const TCHAR* str);
 
 	const TCHAR* get_message();
 };

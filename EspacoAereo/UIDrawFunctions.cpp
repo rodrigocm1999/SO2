@@ -1,14 +1,15 @@
 #include "UIDrawFunctions.h"
 
-#include "resource1.h"
-
-
 using namespace std;
 
 
-DWORD WINAPI draw_map(HDC bitmap_dc, HANDLES_N_STUFF* handles) {
+void draw_map(HDC bitmap_dc, HANDLES_N_STUFF* handles) {
 
 	ControlMain* control = handles->control;
+
+	//Clear bitmap
+	SelectObject(bitmap_dc, GetStockObject(WHITE_BRUSH));
+	PatBlt(bitmap_dc, 0, 0, MAP_SIZE, MAP_SIZE, PATCOPY);
 
 	HDC aux_dc = CreateCompatibleDC(bitmap_dc);
 
@@ -28,25 +29,26 @@ DWORD WINAPI draw_map(HDC bitmap_dc, HANDLES_N_STUFF* handles) {
 	}
 
 	DeleteDC(aux_dc);
-
-	return 0;
 }
 
 DWORD WINAPI draw_map_thread(LPVOID param) {
-	auto stuff = (ToDrawThread*)param;
-	auto control = stuff->handles->control;
+	HANDLES_N_STUFF* stuff = (HANDLES_N_STUFF*)param;
+	ControlMain* control = stuff->control;
 
 	while (!control->exit) {
 
 		DWORD result = WaitForSingleObject(control->shutdown_event, REFRESH_WAIT);
-		if (result != WAIT_OBJECT_0 && result != WAIT_TIMEOUT) {
+		if (result != WAIT_OBJECT_0 && result != WAIT_TIMEOUT)
 			break;
-		}
-		//TODO make sure planes show up
-		draw_map(stuff->bitmap_dc, stuff->handles);
-		InvalidateRect(stuff->handles->map_area, nullptr, false);
+	
+		update_map_area(stuff);
 	}
 	return 0;
+}
+
+void update_map_area(HANDLES_N_STUFF* stuff) {
+	draw_map(stuff->double_buffer_dc, stuff);
+	InvalidateRect(stuff->window, nullptr, false);
 }
 
 void draw_img(HBITMAP h_bitmap, HDC bitmap_dc, HDC aux_dc, const Position& pos) {

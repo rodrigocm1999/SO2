@@ -1,9 +1,13 @@
 #include "StartException.h"
 
 StartException::StartException(tstringstream* stream) {
-	str = stream->str();
+	error_string = stream->str();
+}
+
+StartException::StartException(const TCHAR* str) {
+	error_string = str;
 }
 
 const TCHAR* StartException::get_message() {
-	return str.c_str();
+	return error_string.c_str();
 }
