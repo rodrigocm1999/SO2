@@ -24,9 +24,9 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Bitmap
 //
 
-IDB_AIRPORTICON         BITMAP                  "C:\\Tudo\\School\\SO2\\Trabalho\\EspacoAereo\\AirportIcon.bmp"
+IDB_AIRPORTICON         BITMAP                  "..\\AirportIcon.bmp"
 
-IDB_PLANEICON           BITMAP                  "C:\\Tudo\\School\\SO2\\Trabalho\\EspacoAereo\\PlaneIcon.bmp"
+IDB_PLANEICON           BITMAP                  "..\\PlaneIcon.bmp"
 
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
