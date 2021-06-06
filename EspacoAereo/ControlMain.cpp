@@ -49,7 +49,7 @@ bool ControlMain::add_airport(const TCHAR* name, int x, int y) {
 	Position position;
 	position.x = x;
 	position.y = y;
-
+	
 	for (auto pair : this->airports) {
 		Airport* airport = pair.second;
 		if (airport->name == name || airport->position.x == x && airport->position.y == y)
@@ -133,29 +133,37 @@ void ControlMain::ended_trip(PLANE_ID plane_offset, int message_type) {
 void ControlMain::ended_trip(unsigned char plane_offset, PassengerMessage& message) {
 	const auto list = boarded_passengers_map[plane_offset];
 
-	for (auto passenger_id : *list) {
-		auto passenger = get_passenger_by_id(passenger_id);
-		send_message_to_passenger(passenger, message);
-		all_passengers.erase(passenger->id);
-		delete passenger;
+	if (list != nullptr) {
+		for (auto passenger_id : *list) {
+			auto passenger = get_passenger_by_id(passenger_id);
+			send_message_to_passenger(passenger, message);
+			all_passengers.erase(passenger->id);
+			delete passenger;
+		}
+		boarded_passengers_map.erase(plane_offset);
+		delete list;
 	}
-	boarded_passengers_map.erase(plane_offset);
-	delete list;
 }
 
 std::vector<PASSENGER_ID>* ControlMain::get_passengers_on_plane(PLANE_ID plane_offset) {
-	return boarded_passengers_map[plane_offset];
+	vector<PASSENGER_ID>* temp = boarded_passengers_map[plane_offset];
+	if (temp == nullptr) {
+		temp = new vector<PASSENGER_ID>;
+		boarded_passengers_map[plane_offset] = temp;
+	}
+	return temp;
 }
 
-std::vector<Passenger*> ControlMain::get_passengers_object_on_plane(unsigned char plane_id) {
+std::vector<Passenger*> ControlMain::get_passengers_object_on_plane(PLANE_ID plane_id) {
 	auto plane_passengers = get_passengers_on_plane(plane_id);
 
 	vector<Passenger*> list;
-	list.reserve(plane_passengers->size());
-	
-	for (auto passenger : *plane_passengers)
-		list.push_back(get_passenger_by_id(passenger));
+	if (plane_passengers != nullptr && !plane_passengers->empty()) {
+		list.reserve(plane_passengers->size());
 
+		for (auto passenger : *plane_passengers)
+			list.push_back(get_passenger_by_id(passenger));
+	}
 	return list;
 }
 

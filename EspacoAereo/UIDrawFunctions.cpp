@@ -1,30 +1,57 @@
 #include "UIDrawFunctions.h"
 
+#include "resource1.h"
+
 
 using namespace std;
 
 
-DWORD WINAPI draw_map(HBITMAP h_bitmap, HDC dc, ControlMain* control) {
+DWORD WINAPI draw_map(HDC bitmap_dc, HANDLES_N_STUFF* handles) {
+
+	ControlMain* control = handles->control;
+
+	HDC aux_dc = CreateCompatibleDC(bitmap_dc);
+
+	HBITMAP airport_icon = handles->airport_icon;
 
 	for (auto airport : control->airports) {
-		draw_airport(h_bitmap, dc, airport.second->position);
+		draw_img(airport_icon, bitmap_dc, aux_dc, airport.second->position);
 	}
+
+	HBITMAP plane_icon = handles->plane_icon;
 
 	for (int i = 0; i < control->shared_control->max_plane_amount; i++) {
 		auto plane = control->get_plane(i);
 		if (plane->in_use && plane->is_flying) {
-			draw_plane(h_bitmap, dc, plane->position);
+			draw_img(plane_icon, bitmap_dc, aux_dc, plane->position);
 		}
+	}
+
+	DeleteDC(aux_dc);
+
+	return 0;
+}
+
+DWORD WINAPI draw_map_thread(LPVOID param) {
+	auto stuff = (ToDrawThread*)param;
+	auto control = stuff->handles->control;
+
+	while (!control->exit) {
+
+		DWORD result = WaitForSingleObject(control->shutdown_event, REFRESH_WAIT);
+		if (result != WAIT_OBJECT_0 && result != WAIT_TIMEOUT) {
+			break;
+		}
+		//TODO make sure planes show up
+		draw_map(stuff->bitmap_dc, stuff->handles);
+		InvalidateRect(stuff->handles->map_area, nullptr, false);
 	}
 	return 0;
 }
 
-void draw_plane(HBITMAP hbitmap, HDC dc, const Position& pos) {
-	//TODO
-}
-
-void draw_airport(HBITMAP h_bitmap, HDC dc, const Position& pos) {
-	//TODO
+void draw_img(HBITMAP h_bitmap, HDC bitmap_dc, HDC aux_dc, const Position& pos) {
+	SelectObject(aux_dc, h_bitmap);
+	BitBlt(bitmap_dc, pos.x - (ICON_SIZE / 2), pos.y - -(ICON_SIZE / 2), ICON_SIZE, ICON_SIZE, aux_dc, 0, 0, SRCCOPY);
 }
 
 TSTRING print_airports(ControlMain* control) {

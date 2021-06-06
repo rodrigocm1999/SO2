@@ -19,9 +19,33 @@
 #endif
 
 
-DWORD WINAPI draw_map(HBITMAP h_bitmap, HDC dc, ControlMain* control);
-void draw_plane(HBITMAP h_bitmap, HDC dc, const Position& pos);
-void draw_airport(HBITMAP h_bitmap, HDC dc, const Position& pos);
+typedef struct {
+	HINSTANCE hInstance;
+
+	HWND airport_name_text_field;
+	HWND map_area;
+	HWND list_info_text_field;
+
+	HBITMAP airport_icon;
+	HBITMAP plane_icon;
+	
+	ControlMain* control;
+} HANDLES_N_STUFF;
+
+typedef struct {
+	HDC bitmap_dc;
+	HANDLES_N_STUFF* handles;
+}ToDrawThread;
+
+
+#define ICON_SIZE 28
+#define REFRESH_WAIT 1000
+
+
+DWORD WINAPI draw_map(HDC bitmap_dc, HANDLES_N_STUFF* handles);
+DWORD WINAPI draw_map_thread(LPVOID param);
+
+void draw_img(HBITMAP h_bitmap, HDC bitmap_dc, HDC aux_dc, const Position& pos);
 
 TSTRING print_airports(ControlMain* control);
 TSTRING print_planes(ControlMain* control);

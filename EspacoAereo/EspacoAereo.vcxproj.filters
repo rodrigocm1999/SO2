@@ -98,5 +98,30 @@
     <ClInclude Include="UIDrawFunctions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="resource1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Controlo1.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="bitmap1.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\AirportIcon.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\PlaneIcon.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\AirportIcon.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\PlaneIcon.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

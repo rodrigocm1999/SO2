@@ -30,8 +30,8 @@ void waitForThreadsToFinish(ControlMain* control_main) {
 	//------------------------------------------------------------------------------------	
 }
 
-	
-void exitAndSendSentiment(ControlMain* control_main){
+
+void exitAndSendSentiment(ControlMain* control_main) {
 	//Exiting ----------------------------------------------------------------------------
 	PassengerMessage passenger_message;
 	passenger_message.type = PASSENGER_TYPE_PLANE_CRASHED;
@@ -49,7 +49,7 @@ void exitAndSendSentiment(ControlMain* control_main){
 
 			// if Plane flying warn all passengers that it went down
 			if (plane->is_flying) {
-				const auto passengers = control_main->boarded_passengers_map[plane->offset];
+				const auto passengers = control_main->get_passengers_on_plane(plane->offset);
 
 				for (auto passenger_id : *passengers) {
 					auto passenger = control_main->get_passenger_by_id(passenger_id);
@@ -107,7 +107,7 @@ ControlMain* main_start() {
 
 	HANDLE handle_mapped_file;
 	void* shared_mem_pointer;
-	
+
 	try {
 		shared_mem_pointer = allocate_shared_memory(handle_mapped_file, shared_memory_size);
 	} catch (StartException* e) {
