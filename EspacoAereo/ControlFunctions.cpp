@@ -14,20 +14,19 @@
 using namespace std;
 
 DWORD WINAPI receive_updates(LPVOID param) {
-	ControlMain* control = (ControlMain*)param;
+	auto control = (ControlMain*)param;
 
 	while (!control->exit) {
 		PlaneControlMessage message = control->receiving_buffer->get_next_element();
-		const int plane_offset = message.plane_offset;
-		Plane* plane = &control->planes[plane_offset];
+		const PLANE_ID plane_id = message.plane_offset;
+		Plane* plane = &control->planes[plane_id];
 
 		switch (message.type) {
-			case TYPE_NEW_PLANE:
-			{
+			case TYPE_NEW_PLANE: {
 				TSTRING airport_name = message.data.airport_name;
 
 				tcout << _T("New Plane -> ")
-					<< _T("offset : ") << plane_offset
+					<< _T("id : ") << plane_id
 					<< _T(", airport : ") << airport_name
 					<< _T(", max capacity : ") << plane->max_passengers
 					<< _T(", velocity : ") << plane->velocity << endl;
@@ -40,7 +39,7 @@ DWORD WINAPI receive_updates(LPVOID param) {
 					airport->add_plane(plane);
 
 				} else {
-					auto buffer = control->get_plane_buffer(plane_offset);
+					auto buffer = control->get_plane_buffer(plane_id);
 					message.type = TYPE_PLANE_NOT_ALLOWED;
 					buffer->set_next_element(message);
 
@@ -48,14 +47,15 @@ DWORD WINAPI receive_updates(LPVOID param) {
 				}
 				break;
 			}
-			case TYPE_NEXT_DESTINY:
-			{
+
+			case TYPE_NEXT_DESTINY: {
 				TSTRING airport_name = message.data.airport_name;
-				CircularBuffer* buffer = control->get_plane_buffer(plane_offset);
+				CircularBuffer* buffer = control->get_plane_buffer(plane_id);
 
 				if (plane->already_boarded) {
 					message.type = TYPE_ERROR;
-					memcpy(message.data.error_message, _T("Plane not ready to fly"), BUFFER_SIZE * sizeof(TCHAR));
+					TSTRING str = _T("Plane not ready to fly");
+					memcpy(message.data.error_message, str.c_str(), str.size() * sizeof(TCHAR));
 					buffer->set_next_element(message);
 				}
 
@@ -67,7 +67,7 @@ DWORD WINAPI receive_updates(LPVOID param) {
 					plane->destiny_airport_id = destiny->id;
 					buffer->set_next_element(message);
 
-					tcout << _T("Plane offset -> ") << plane_offset
+					tcout << _T("Plane offset -> ") << plane_id
 						<< _T(", changed destiny to : ") << airport_name << endl;
 
 				} else {
@@ -76,37 +76,33 @@ DWORD WINAPI receive_updates(LPVOID param) {
 				}
 				break;
 			}
-			case TYPE_START_TRIP:
-			{
-				control->plane_left_airport(plane_offset);
-				tcout << _T("Plane offset -> ") << plane_offset << _T(", left the airport") << endl;
+			case TYPE_START_TRIP: {
+				control->plane_left_airport(plane_id);
+				tcout << _T("Plane offset -> ") << plane_id << _T(", left the airport") << endl;
 
 				PassengerMessage message;
 				message.type = PASSENGER_TYPE_STARTED_FLYING;
-				for (auto passenger : control->get_passengers_object_on_plane(plane_offset)) {
+				for (auto passenger : control->get_passengers_object_on_plane(plane_id)) {
 					control->send_message_to_passenger(passenger, message);
 				}
 				break;
 			}
 
-			case TYPE_PLANE_MOVED:
-			{
+			case TYPE_PLANE_MOVED: {
 				Position& position = message.data.position;
-				tcout << _T("Plane offset -> ") << plane->offset << _T(", moved to : ") << position.x << _T(",") <<
-					position.y << endl;
+				tcout << _T("Plane offset -> ") << plane->offset << _T(", moved to : ") << position.x << _T(",") << position.y << endl;
 
 				PassengerMessage message;
 				message.type = PASSENGER_TYPE_MOVED;
 				message.data.pos = position;
-				for (auto passenger : control->get_passengers_object_on_plane(plane_offset)) {
+				for (auto passenger : control->get_passengers_object_on_plane(plane_id)) {
 					control->send_message_to_passenger(passenger, message);
 				}
 
 				break;
 			}
 
-			case TYPE_TO_BOARD:
-			{
+			case TYPE_TO_BOARD: {
 				tcout << _T("Plane offset -> ") << plane->offset << _T(", boarding") << endl;
 
 				control->board_people(plane->offset, plane->origin_airport_id, plane->destiny_airport_id);
@@ -115,7 +111,7 @@ DWORD WINAPI receive_updates(LPVOID param) {
 
 				PassengerMessage message;
 				message.type = PASSENGER_TYPE_BOARDED;
-				for (auto passenger : control->get_passengers_object_on_plane(plane_offset)) {
+				for (auto passenger : control->get_passengers_object_on_plane(plane_id)) {
 					tcout << _T("pasenger id -> ") << passenger->id << endl;
 					control->send_message_to_passenger(passenger, message);
 				}
@@ -123,27 +119,24 @@ DWORD WINAPI receive_updates(LPVOID param) {
 				break;
 			}
 
-			case TYPE_PLANE_LEAVES:
-			{
+			case TYPE_PLANE_LEAVES: {
 				tcout << _T("Plane offset -> ") << plane->offset << _T(", left") << endl;
 
 				if (plane->origin_airport_id != NOT_DEFINED_AIRPORT) {
-					control->plane_left_airport(plane_offset);
+					control->plane_left_airport(plane_id);
 				}
 				break;
 			}
 
-			case TYPE_PLANE_CRASHES:
-			{
+			case TYPE_PLANE_CRASHES: {
 				tcout << _T("Plane offset -> ") << plane->offset << _T(", crashed") << endl;
 
-				control->ended_trip(plane_offset, PASSENGER_TYPE_PLANE_CRASHED);
+				control->ended_trip(plane_id, PASSENGER_TYPE_PLANE_CRASHED);
 
 				break;
 			}
 
-			case TYPE_FINISHED_TRIP:
-			{
+			case TYPE_FINISHED_TRIP: {
 				tcout << _T("Plane offset -> ") << plane->offset
 					<< _T(", arrived at : ") << control->get_airport(plane->destiny_airport_id)->name
 					<< _T(", from : ") << control->get_airport(plane->origin_airport_id)->name << endl;
@@ -154,12 +147,11 @@ DWORD WINAPI receive_updates(LPVOID param) {
 				plane->origin_airport_id = plane->destiny_airport_id;
 				plane->destiny_airport_id = NOT_DEFINED_AIRPORT;
 
-				control->ended_trip(plane_offset, PASSENGER_TYPE_PLANE_ARRIVED);
+				control->ended_trip(plane_id, PASSENGER_TYPE_PLANE_ARRIVED);
 
 				break;
 			}
-			case TYPE_CONTROL_EXITING:
-			{
+			case TYPE_CONTROL_EXITING: {
 				// no need to do anything, just here to not go to the default
 				break;
 			}
@@ -250,7 +242,7 @@ DWORD WINAPI passenger_pipe_receiver(LPVOID param) {
 				Airport* origin = control_main->get_airport(message.data.new_passenger.origin);
 				Airport* destiny = control_main->get_airport(message.data.new_passenger.destiny);
 
-				Passenger* passenger = new Passenger(message.id, origin, destiny, message.data.new_passenger.name);
+				auto passenger = new Passenger(message.id, origin, destiny, message.data.new_passenger.name);
 
 				if (origin == nullptr || destiny == nullptr) {
 

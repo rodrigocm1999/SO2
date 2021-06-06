@@ -82,6 +82,8 @@ void ControlMain::plane_left_airport(PLANE_ID plane_offset) {
 	Plane* plane = get_plane(plane_offset);
 	Airport* airport = get_airport(plane->origin_airport_id);
 
+	if (plane == nullptr || airport == nullptr) return; // pode acontecer se o controlo crashar e depois aberto sem terminar os aviões
+	
 	for (unsigned int i = 0; i < airport->planes.size(); ++i) {
 		Plane* cur_plane = airport->planes[i];
 		if (cur_plane == plane) {
@@ -191,9 +193,8 @@ bool ControlMain::_send_passenger_message(Passenger* passenger, const PassengerM
 }
 
 void ControlMain::remove_passenger(Passenger* passenger) {
-	//TODO properly remove elements from all places
-	std::cout << "removing passenger id -> " << passenger->id << "\n";
-
+	if (passenger == nullptr) return;
+	
 	all_passengers.erase(passenger->id);
 
 	vector<PASSENGER_ID>* list = nullptr;
@@ -203,7 +204,7 @@ void ControlMain::remove_passenger(Passenger* passenger) {
 	else
 		list = passenger->origin->passengers[passenger->destiny->id];
 
-	for (auto it = list->begin(); it < list->end(); it++) {
+	for (auto it = list->begin(); it < list->end(); ++it) {
 
 		if (*it == passenger->id) {
 			list->erase(it);

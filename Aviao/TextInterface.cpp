@@ -1,5 +1,6 @@
 #include "TextInterface.h"
 
+#include "PlaneFunctions.h"
 #include "Utils.h"
 
 
@@ -88,7 +89,7 @@ void destiny_command(PlaneMain* plane_main, vector<TSTRING> input_parts) {
 }
 
 void exit_command(PlaneMain* plane_main) {
-	plane_main->exit = true;
+	exit_everything(plane_main);
 }
 
 PlaneControlMessage ready_message(PlaneMain* plane_main, int type) {

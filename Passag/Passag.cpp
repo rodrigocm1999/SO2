@@ -24,6 +24,8 @@ using namespace std;
 #define tstringstream stringstream
 #endif
 
+#define THREADS_AMOUNT 3
+
 int _tmain(int argc, TCHAR** argv) {
 #ifdef UNICODE
 	int val = _setmode(_fileno(stdin), _O_WTEXT);
@@ -61,7 +63,7 @@ int _tmain(int argc, TCHAR** argv) {
 
 	HANDLE shutdown_event = CreateEvent(nullptr, true, false, nullptr);
 	if (shutdown_event == nullptr) {
-		tcout << _T("Hanndle creation error") << endl;
+		tcout << _T("Handle creation error") << endl;
 		return -1;
 	}
 
@@ -75,13 +77,13 @@ int _tmain(int argc, TCHAR** argv) {
 	}
 
 	HANDLE mutex_new_passenger = CreateMutex(nullptr, FALSE, MUTEX_NEW_PASSENGER);
-	if (mutex_new_passenger == nullptr)     {
+	if (mutex_new_passenger == nullptr) {
 		tcout << _T("Error creating/opening mutex -> ") << GetLastError() << endl;
 		CloseHandle(shutdown_event);
 		return 1;
 	}
 
-		DWORD result = WaitForSingleObject(mutex_new_passenger, 3000);
+	DWORD result = WaitForSingleObject(mutex_new_passenger, 3000);
 	if (result != WAIT_OBJECT_0) {
 		tcout << _T("Error Waiting for mutex to connect to control -> ") << GetLastError() << endl;
 		CloseHandle(passenger_named_pipe);
@@ -91,14 +93,15 @@ int _tmain(int argc, TCHAR** argv) {
 
 	bool success = WaitNamedPipe(CONTROL_PIPE_MAIN, INFINITE);
 	if (!success) {
-		tcout << _T("Error Waiting for control named pipe -> ") << GetLastError() << endl;
+		tcout << _T("Error Waiting for control named pipe -> ") << GetLastError() << endl
+			<< _T("Control might not be running") << endl;
 		CloseHandle(passenger_named_pipe);
 		CloseHandle(shutdown_event);
 		return -1;
 	}
 
-	const HANDLE control_named_pipe = CreateFile(CONTROL_PIPE_MAIN, GENERIC_WRITE, 0, nullptr,
-												 OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+	HANDLE control_named_pipe = CreateFile(CONTROL_PIPE_MAIN, GENERIC_WRITE, 0, nullptr,
+										   OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (control_named_pipe == INVALID_HANDLE_VALUE) {
 		tcout << _T("Error opening control named pipe -> ") << GetLastError() << endl;
 		CloseHandle(passenger_named_pipe);
@@ -126,26 +129,35 @@ int _tmain(int argc, TCHAR** argv) {
 
 	ReleaseMutex(mutex_new_passenger);
 
-	TimerThread timer_thread;
-	timer_thread.exit = false;
-	timer_thread.control_pipe = control_named_pipe;
-	timer_thread.this_pipe = passenger_named_pipe;
-	timer_thread.destiny_port = destiny_port;
-	timer_thread.origin_port = origin_port;
-	timer_thread.max_wait_time = max_waiting_time_in_seconds;
-	timer_thread.stop_wait_event = shutdown_event;
-	timer_thread.pipe_updates_thread = nullptr;
-	timer_thread.timeout = false;
-	InitializeCriticalSection(&timer_thread.critical_section);
+	PassagStruct passag_struct;
+	passag_struct.exit = false;
+	passag_struct.control_pipe = control_named_pipe;
+	passag_struct.this_pipe = passenger_named_pipe;
+	passag_struct.destiny_port = destiny_port;
+	passag_struct.origin_port = origin_port;
+	passag_struct.max_wait_time = max_waiting_time_in_seconds;
+	passag_struct.stop_wait_event = shutdown_event;
+	passag_struct.pipe_updates_thread = nullptr;
+	passag_struct.timeout = false;
+	InitializeCriticalSection(&passag_struct.critical_section);
 
+	int amount_of_threads = THREADS_AMOUNT;
+	HANDLE handles[THREADS_AMOUNT] = { nullptr };
 
 	if (message.type == PASSENGER_TYPE_GOOD_AIRPORTS) {
-		tcout << _T("You are now waiting to be boarded on the plane") << endl;
+		tcout << _T("You are now waiting to be boarded on the plane \nWrite 'exit' to leave") << endl;
 
-		timer_thread.pipe_updates_thread = CreateThread(nullptr, 0, receive_control_updates, &timer_thread, 0, nullptr);
+		passag_struct.pipe_updates_thread = CreateThread(nullptr, 0, receive_control_updates, &passag_struct, 0, nullptr);
+		passag_struct.exit_command_thread = CreateThread(nullptr, 0, receive_exit_command, &passag_struct, 0, nullptr);
 
-		if (timer_thread.max_wait_time >= 0) {
-			max_wait_timer(&timer_thread);
+		handles[0] = passag_struct.pipe_updates_thread;
+		handles[1] = passag_struct.exit_command_thread;
+
+		if (passag_struct.max_wait_time >= 0) {
+			passag_struct.timeout_thread = CreateThread(nullptr, 0, max_wait_timer, &passag_struct, 0, nullptr);
+			handles[2] = passag_struct.timeout_thread;
+		} else {
+			amount_of_threads--;
 		}
 
 	} else if (message.type == PASSENGER_TYPE_BAD_AIRPORTS) {
@@ -154,28 +166,33 @@ int _tmain(int argc, TCHAR** argv) {
 		tcout << _T("Invalid Message from control! type -> ") << message.type << endl;
 	}
 
-	if (timer_thread.pipe_updates_thread != nullptr) {
-		const DWORD result = WaitForSingleObject(timer_thread.pipe_updates_thread, INFINITE);
-		if (result != WAIT_OBJECT_0)
-			tcout << _T("Error waiting for max_wait_thread to finish") << endl;
-	}
-
-	tcout << _T("Exiting...") << endl;
+	const DWORD wait_result = WaitForMultipleObjects(amount_of_threads, handles, true, INFINITE);
+	if (wait_result == WAIT_TIMEOUT || wait_result == WAIT_ABANDONED || wait_result == WAIT_FAILED)
+		tcout << _T("Error waiting for threads to finish -> ") << GetLastError() << endl;
 
 	// In case of timeout ------------------------------------------------------------------------------------------
-	if (timer_thread.timeout) {
+	if (passag_struct.timeout) {
 		DWORD result = WaitForSingleObject(mutex_new_passenger, 3000);
 		if (result != WAIT_OBJECT_0) {
 			tcout << _T("Error Waiting for mutex to connect to control -> ") << GetLastError() << endl;
 		} else {
 
-			message.type = PASSENGER_TYPE_GAVE_UP;
-			if (!WriteFile(control_named_pipe, &message, sizeof(message), &bytes_written, nullptr)) {
-				tcout << _T("Error sending timeout alert to control") << endl;
+			HANDLE control_named_pipe = CreateFile(CONTROL_PIPE_MAIN, GENERIC_WRITE, 0, nullptr,
+												   OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+			if (control_named_pipe == INVALID_HANDLE_VALUE) {
+				tcout << _T("Error opening control named pipe to send PASSENGER_TYPE_GAVE_UP message -> ") << GetLastError() << endl;
+			} else {
+				message.id = process_id;
+				message.type = PASSENGER_TYPE_GAVE_UP;
+				if (!WriteFile(control_named_pipe, &message, sizeof(message), &bytes_written, nullptr)) {
+					tcout << _T("Error sending timeout alert to control -> ") << GetLastError() << endl;
+				}
 			}
 			tcout << _T("Person Gave up waiting for a plane") << endl;
 		}
 		ReleaseMutex(mutex_new_passenger);
+	} else {
+		tcout << _T("Exiting...") << endl;
 	}
 	//---------------------------------------------------------------------------------------------------------------
 
@@ -185,16 +202,9 @@ int _tmain(int argc, TCHAR** argv) {
 	if (!CloseHandle(passenger_named_pipe)) {
 		tcout << _T("Error closing the passenger named pipe -> ") << GetLastError() << endl;
 	}
+	CloseHandle(passag_struct.pipe_updates_thread);
+	CloseHandle(passag_struct.exit_command_thread);
+	CloseHandle(passag_struct.timeout_thread);
 	CloseHandle(mutex_new_passenger);
 	CloseHandle(shutdown_event);
-	//TODO Funcionamento: 
-	//	O passageiro é atribuído ao aeroporto origem, ficando a aguardar que exista um avião disponível para o aeroporto destino. 
-	//		Quando tal avião existir, o passageiro embarca automaticamente e, ao chegar ao aeroporto destino, desembarca e o programa termina.
-	//		Caso tenha sido indicado um tempo de espera máximo, o passageiro desiste automaticamente de viajar se o tempo indicado passar 
-	//			e não for atribuído a nenhum avião, sai do aeroporto e o programa termina.
-
-	//TODO Interação:
-	//	O utilizador é automaticamente informado de quando embarca, da posição em que está quando está em voo, e quando chega
-	//	O utilizador pode sempre interagir com esta aplicação para a terminar. Se o fizer, considera - se que o passageiro deixou de existir
-
 }

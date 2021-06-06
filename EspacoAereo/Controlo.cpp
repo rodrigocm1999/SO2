@@ -59,10 +59,6 @@ int _tmain(int argc, TCHAR** argv) {
 		tcout << _T("ERROR -> ") << e->get_message() << endl;
 		delete e;
 	}
-	
 
 	CloseHandle(process_lock_mutex);
-
-	//TODO Interface com utilizador: interface gráfica Win32 que apresenta todo o espaço aéreo e os seus elementos. Os 
-	//	aeroportos e os aviões são representados graficamente de forma distinta.Esta informação estará permanentemente visível e sempre atualizada
 }

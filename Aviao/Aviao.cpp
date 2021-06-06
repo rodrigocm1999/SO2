@@ -133,7 +133,8 @@ int _tmain(int argc, TCHAR** argv) {
 
 	ReleaseMutex(plane_lock);
 
-	
+	tcout << _T("Currently on airport : ") << starting_port << endl;
+
 	enter_text_interface_plane(plane_main);
 
 	exit_everything(plane_main);

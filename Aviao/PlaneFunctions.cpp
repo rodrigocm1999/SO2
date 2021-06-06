@@ -98,6 +98,7 @@ DWORD WINAPI fly_plane(LPVOID param) {
 		} else if (result == PLANE_ARRIVED) {
 			plane->is_flying = false;
 			plane->flight_ready = false;
+			plane->already_boarded = false;
 
 			auto message = ready_message(plane_main, TYPE_FINISHED_TRIP);
 			plane_main->control_buffer->set_next_element(message);
@@ -123,8 +124,7 @@ DWORD WINAPI heartbeat(LPVOID param) {
 }
 
 void exit_everything(PlaneMain* plane_main) {
-	tcout << _T("Exiting\n-----------------------------") << endl;
-
+	plane_main->exit = true;
 	plane_main->this_plane->in_use = false;
 
 	PlaneControlMessage message;

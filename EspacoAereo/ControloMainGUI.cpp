@@ -58,7 +58,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	hWnd = CreateWindow(_T("windowClass"), _T("Controlo"), WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 						-10, 0, 1500, 1050, HWND_DESKTOP, NULL, hInst, 0);
 	stuff.window = hWnd;
-	
+
 	if (hWnd != nullptr) {
 
 		HANDLE process_lock_mutex = nullptr;
@@ -76,7 +76,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 			stuff.control = control_main;
 
 			stuff.draw_thread_handle = create_thread(draw_map_thread, &stuff);
-			
+
 			while (GetMessage(&msg, nullptr, NULL, NULL)) {
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
@@ -107,7 +107,7 @@ LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 
 	HANDLES_N_STUFF* main_struct = nullptr;
 
-	//main_struct = (HANDLES_N_STUFF*)GetWindowLongPtr(hWnd, GWLP_USERDATA); // TODO ERROR FIX - o GetWindowLongPtr está a retornar NULL
+	//main_struct = (HANDLES_N_STUFF*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 	main_struct = &stuff;
 	main_struct->hInstance = GetModuleHandle(nullptr);
 
@@ -123,7 +123,7 @@ LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 					//draw on map but if not correct show output on list_text_field
 					vector<TSTRING> input_parts = string_split(text, _T(" "));
 					if (input_parts.size() != 3) {
-						SetWindowText(main_struct->list_info_text_field, _T("Invalid input"));
+						SetWindowText(main_struct->list_info_text_field, _T("Invalid input -> <airport_name> <posX> <poxY>"));
 						break;
 					}
 					const int pos_x = _ttoi(input_parts[1].c_str());
@@ -139,6 +139,7 @@ LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 						SetWindowText(main_struct->list_info_text_field, _T("There is either an airport with that name or there is one too close (10 grid units)"));
 						break;
 					}
+					//TODO limpar a caixa onde se escreveu o comando
 					SetWindowText(main_struct->list_info_text_field, _T(""));
 					break;
 				}
@@ -226,7 +227,7 @@ LRESULT CALLBACK map_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
 	switch (msg) {
 		case WM_ERASEBKGND:
 			break;
-		
+
 		case WM_NCPAINT: {
 			HDC hdc = BeginPaint(hWnd, &paint_struct);
 
