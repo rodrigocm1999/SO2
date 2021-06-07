@@ -112,3 +112,24 @@ TSTRING print_passengers(ControlMain* control) {
 
 	return stream.str();
 }
+
+void set_accept_state(HANDLES_N_STUFF * handles)
+{
+	ControlMain* control = handles->control;
+	
+	if (control->change_accept_state())
+	{
+		if (control->accept_state)
+		{
+			SetWindowTextW(handles->accept_window, _T("New Planes: on"));
+		}
+		else
+		{
+			SetWindowTextW(handles->accept_window, _T("New Planes: off"));
+		}
+	}
+	else
+	{
+		SetWindowTextW(handles->accept_window, _T("Something went wrong locking plane entering"));
+	}
+}

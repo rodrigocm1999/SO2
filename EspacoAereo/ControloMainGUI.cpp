@@ -165,27 +165,7 @@ LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 
 				case ACCEPT:
 					//TODO accept part
-					HANDLE mutex = main_struct->control->plane_entering_lock;
-					SetWindowTextW(main_struct->accept_window, _T(""));
-
-					if (main_struct->control->accept_state) {
-						DWORD result = WaitForSingleObject(mutex, 2000);
-						if (result != WAIT_OBJECT_0) {
-							//tcout << _T("Something went wrong locking plane entering");
-							//continue;
-							SetWindowTextW(main_struct->accept_window, _T("Something went wrong locking plane entering"));
-						}
-						//tcout << _T("Planes can now not enter") << endl;
-						SetWindowTextW(main_struct->accept_window, _T("Planes can now not enter"));
-						
-					}
-					else {
-						SetWindowTextW(main_struct->accept_window, _T(""));
-						ReleaseMutex(mutex);
-						SetWindowTextW(main_struct->accept_window, _T("Planes can enter again"));
-					
-					}
-					main_struct->control->accept_state = !main_struct->control->accept_state;
+					set_accept_state(main_struct);
 					break;
 			}
 			break;
@@ -228,7 +208,7 @@ void AddControls(HWND hWnd, HINSTANCE hInstance, HANDLES_N_STUFF* main_struct) {
 	CreateWindowW(_T("Button"), _T("List Planes"), WS_VISIBLE | WS_CHILD, 1172, 500, 120, 30, hWnd, (HMENU)LIST_PLANES, NULL, NULL);
 	CreateWindowW(_T("Button"), _T("List Passangers"), WS_VISIBLE | WS_CHILD, 1294, 500, 120, 30, hWnd, (HMENU)LIST_PASSANGERS, NULL, NULL);
 	CreateWindowW(_T("Button"), _T("Accept"), WS_VISIBLE | WS_CHILD, 1050, 532, 120, 30, hWnd, (HMENU)ACCEPT, NULL, NULL);
-	main_struct->accept_window = CreateWindowW(_T("Static"), _T(""), WS_VISIBLE | WS_CHILD,
+	main_struct->accept_window = CreateWindowW(_T("Static"), _T("New Planes: on"), WS_VISIBLE | WS_CHILD,
 		1172, 532, 120, 35, hWnd, NULL, NULL, NULL);
 }
 

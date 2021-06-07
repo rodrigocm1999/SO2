@@ -214,3 +214,27 @@ void ControlMain::remove_passenger(Passenger* passenger) {
 
 	delete passenger;
 }
+
+bool ControlMain::change_accept_state()
+{
+	HANDLE mutex = plane_entering_lock;
+
+	if (accept_state) {
+		DWORD result = WaitForSingleObject(mutex, 2000);
+		if (result != WAIT_OBJECT_0) {
+			//continue;
+			//SetWindowTextW(main_struct->accept_window, _T("Something went wrong locking plane entering"));
+			return false;
+			
+		}
+		//SetWindowTextW(main_struct->accept_window, _T("New Planes: off"));
+
+	}
+	else {
+		ReleaseMutex(mutex);
+		//SetWindowTextW(main_struct->accept_window, _T("New Planes: on"));
+
+	}
+	accept_state = !accept_state;
+	return true;
+}

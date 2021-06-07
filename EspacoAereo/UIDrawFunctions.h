@@ -53,3 +53,5 @@ void draw_img(HBITMAP h_bitmap, HDC bitmap_dc, HDC aux_dc, const Position& pos);
 TSTRING print_airports(ControlMain* control);
 TSTRING print_planes(ControlMain* control);
 TSTRING print_passengers(ControlMain* control);
+
+void set_accept_state(HANDLES_N_STUFF* handles);

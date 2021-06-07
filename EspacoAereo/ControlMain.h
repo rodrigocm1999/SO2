@@ -66,6 +66,8 @@ public:
 
 	void remove_passenger(Passenger* passenger);
 
+	bool change_accept_state();
+
 private:
 	static bool _send_passenger_message(Passenger* passenger, const PassengerMessage& message);
 };
