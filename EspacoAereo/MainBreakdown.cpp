@@ -22,7 +22,7 @@ using namespace std;
 #define tstringstream stringstream
 #endif
 
-void waitForThreadsToFinish(ControlMain* control_main) {
+void wait_for_threads_to_finish(ControlMain* control_main) {
 	// Wait for them to finish -----------------------------------------------------------
 	const int handle_amount = 3;
 	HANDLE handles[] = { control_main->receiving_thread ,control_main->heartbeat_thread ,control_main->passenger_receiver };
@@ -31,7 +31,7 @@ void waitForThreadsToFinish(ControlMain* control_main) {
 }
 
 
-void exitAndSendSentiment(ControlMain* control_main) {
+void exit_and_send_sentiment(ControlMain* control_main) {
 	//Exiting ----------------------------------------------------------------------------
 	PassengerMessage passenger_message;
 	passenger_message.type = PASSENGER_TYPE_PLANE_CRASHED;
@@ -71,7 +71,7 @@ void exitAndSendSentiment(ControlMain* control_main) {
 	}
 }
 
-void startAllThreads(ControlMain* control_main) {
+void start_all_threads(ControlMain* control_main) {
 	// Start all threads -----------------------------------------------------------------
 	control_main->passenger_receiver = create_thread(passenger_pipe_receiver, control_main);
 	control_main->receiving_thread = create_thread(receive_updates, control_main);

@@ -30,4 +30,6 @@ public:
 
 	std::vector<PASSENGER_ID>* remove_passengers(AIRPORT_ID destiny_id);
 	std::vector<PASSENGER_ID>* give_passengers_to_plane(AIRPORT_ID destiny_id, int plane_capacity);
+
+	int get_passengers_count();
 };

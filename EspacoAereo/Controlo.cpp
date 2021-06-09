@@ -45,13 +45,13 @@ int _tmain(int argc, TCHAR** argv) {
 
 		tcout << _T("Max planes from registry : ") << control_main->shared_control->max_plane_amount << endl;
 
-		startAllThreads(control_main);
+		start_all_threads(control_main);
 		control_main->interface_thread = create_thread(enter_text_interface, control_main);
 
-		waitForThreadsToFinish(control_main);
+		wait_for_threads_to_finish(control_main);
 		WaitForSingleObject(control_main->interface_thread, INFINITE);
 
-		exitAndSendSentiment(control_main);
+		exit_and_send_sentiment(control_main);
 
 		delete control_main;
 

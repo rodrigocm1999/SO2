@@ -35,7 +35,8 @@ void Airport::add_passengers_list(vector<PASSENGER_ID>* passengers_list, AIRPORT
 
 	if (already_created == nullptr) {
 		passengers.insert(make_pair(destiny_id, passengers_list));
-	} else {
+	}
+	else {
 		already_created->insert(already_created->end(), passengers_list->begin(), passengers_list->end());
 		delete passengers_list;
 	}
@@ -64,3 +65,15 @@ vector<PASSENGER_ID>* Airport::give_passengers_to_plane(AIRPORT_ID destiny_id, i
 
 	return into_the_plane;
 }
+
+int Airport::get_passengers_count()
+{
+	int count = 0;
+	for (auto list : passengers) {
+		count += list.second->size();
+	}
+	return count;
+}
+
+
+

@@ -54,8 +54,8 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	if (!RegisterClassEx(&window_app))
 		return -1;
 
-	hWnd = CreateWindow(_T("windowClass"), _T("Controlo"), WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-						-10, 0, 1500, 1050, HWND_DESKTOP, NULL, hInst, 0);
+	hWnd = CreateWindow(_T("windowClass"), _T("Controlo"), WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_BORDER | WS_MAXIMIZE,
+		0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), HWND_DESKTOP, NULL, hInst, 0);
 	stuff.window = hWnd;
 
 	if (hWnd != nullptr) {
@@ -66,7 +66,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 
 			ControlMain* control_main = main_start();
 
-			startAllThreads(control_main);
+			start_all_threads(control_main);
 
 			stuff.plane_icon = LoadBitmap(hInst, MAKEINTRESOURCE(IDB_PLANEICON));
 			stuff.airport_icon = LoadBitmap(hInst, MAKEINTRESOURCE(IDB_AIRPORTICON));
@@ -82,13 +82,14 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 			}
 
 			exit_everything(control_main);
-			waitForThreadsToFinish(control_main);
+			wait_for_threads_to_finish(control_main);
 
-			exitAndSendSentiment(control_main);
+			exit_and_send_sentiment(control_main);
 
 			delete control_main;
 
-		} catch (StartException* e) {
+		}
+		catch (StartException* e) {
 			MessageBox(hWnd, e->get_message(), _T("Error"), MB_OK);
 			delete e;
 		}
@@ -112,72 +113,70 @@ LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 
 
 	switch (msg) {
-		case WM_COMMAND:
-			switch (wParam) {
-				case ADD_AIRPORT: {
-					update_map_area(main_struct);
+	case WM_COMMAND:
+		switch (wParam) {
+		case ADD_AIRPORT: {
+			update_map_area(main_struct);
 
-					TCHAR text[100];
-					GetWindowText(main_struct->airport_name_text_field, text, sizeof(text));
-					//SetWindowTextW(main_struct->map_area, text);
-					//draw on map but if not correct show output on list_text_field
-					vector<TSTRING> input_parts = string_split(text, _T(" "));
-					if (input_parts.size() != 3) {
-						SetWindowText(main_struct->list_info_text_field, _T("Invalid input -> <airport_name> <posX> <poxY>"));
-						break;
-					}
-					const int pos_x = _ttoi(input_parts[1].c_str());
-					const int pos_y = _ttoi(input_parts[2].c_str());
-
-					if (pos_x >= MAP_SIZE || pos_y >= MAP_SIZE) {
-						SetWindowText(main_struct->list_info_text_field, _T("Position exceds limit"));
-						break;
-					}
-
-					auto success = main_struct->control->add_airport(input_parts[0].c_str(), pos_x, pos_y);
-					if (!success) {
-						SetWindowText(main_struct->list_info_text_field, _T("There is either an airport with that name or there is one too close (10 grid units)"));
-						break;
-					}
-					//TODO limpar a caixa onde se escreveu o comando
-					SetWindowText(main_struct->list_info_text_field, _T(""));
-					break;
-				}
-
-				case LIST_AIRPORTS: {
-					TSTRING str = print_airports(main_struct->control);
-					SetWindowText(main_struct->list_info_text_field, str.c_str());
-					break;
-				}
-
-				case LIST_PLANES: {
-					TSTRING str = print_planes(main_struct->control);
-					SetWindowText(main_struct->list_info_text_field, str.c_str());
-					break;
-				}
-
-				case LIST_PASSANGERS: {
-					TSTRING str = print_passengers(main_struct->control);
-					SetWindowText(main_struct->list_info_text_field, str.c_str());
-					break;
-				}
-
-				case ACCEPT:
-					set_accept_state(main_struct);
-					break;
+			TCHAR text[100];
+			GetWindowText(main_struct->airport_name_text_field, text, sizeof(text));
+			vector<TSTRING> input_parts = string_split(text, _T(" "));
+			if (input_parts.size() != 3) {
+				SetWindowText(main_struct->list_info_text_field, _T("Invalid input -> <airport_name> <posX> <poxY>"));
+				break;
 			}
-			break;
-		case WM_CLOSE:
-			if (MessageBox(hWnd, _T("Are you sure you want to exit?"), _T("Exit"), MB_YESNO) == IDYES) {
-				PostQuitMessage(0);
-			}
-			break;
-		case WM_CREATE:
-			AddControls(hWnd, main_struct->hInstance, main_struct);
-			break;
+			const int pos_x = _ttoi(input_parts[1].c_str());
+			const int pos_y = _ttoi(input_parts[2].c_str());
 
-		default:
-			return DefWindowProc(hWnd, msg, wParam, lParam);
+			if (pos_x >= MAP_SIZE || pos_y >= MAP_SIZE) {
+				SetWindowText(main_struct->list_info_text_field, _T("Position exceds limit"));
+				break;
+			}
+
+			auto success = main_struct->control->add_airport(input_parts[0].c_str(), pos_x, pos_y);
+			if (!success) {
+				SetWindowText(main_struct->list_info_text_field, _T("There is either an airport with that name or there is one too close (10 grid units)"));
+				break;
+			}
+			SetWindowText(main_struct->list_info_text_field, _T(""));
+			SetWindowText(main_struct->airport_name_text_field, _T(""));
+			break;
+		}
+
+		case LIST_AIRPORTS: {
+			TSTRING str = print_airports(main_struct->control);
+			SetWindowText(main_struct->list_info_text_field, str.c_str());
+			break;
+		}
+
+		case LIST_PLANES: {
+			TSTRING str = print_planes(main_struct->control);
+			SetWindowText(main_struct->list_info_text_field, str.c_str());
+			break;
+		}
+
+		case LIST_PASSANGERS: {
+			TSTRING str = print_passengers(main_struct->control);
+			SetWindowText(main_struct->list_info_text_field, str.c_str());
+			break;
+		}
+
+		case ACCEPT:
+			set_accept_state(main_struct);
+			break;
+		}
+		break;
+	case WM_CLOSE:
+		if (MessageBox(hWnd, _T("Are you sure you want to exit?"), _T("Exit"), MB_YESNO) == IDYES) {
+			PostQuitMessage(0);
+		}
+		break;
+	case WM_CREATE:
+		AddControls(hWnd, main_struct->hInstance, main_struct);
+		break;
+
+	default:
+		return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
 	return TRUE;
 }
@@ -185,7 +184,7 @@ LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 void AddControls(HWND hWnd, HINSTANCE hInstance, HANDLES_N_STUFF* main_struct) {
 	main_struct->map_area =
 		CreateWindowW(_T("Static"), _T(""), WS_VISIBLE | WS_CHILD | WS_BORDER,
-					  0, 0, MAP_SIZE, MAP_SIZE, hWnd, NULL, NULL, NULL);
+			0, 0, MAP_SIZE, MAP_SIZE, hWnd, NULL, NULL, NULL);
 	SetWindowLongPtr(main_struct->map_area, GWLP_WNDPROC, (LONG_PTR)map_event_handler);
 
 
@@ -196,15 +195,15 @@ void AddControls(HWND hWnd, HINSTANCE hInstance, HANDLES_N_STUFF* main_struct) {
 
 	main_struct->list_info_text_field =
 		CreateWindowW(_T("Edit"), 0, WS_VISIBLE | WS_CHILD | WS_BORDER | WS_HSCROLL |
-					  WS_VSCROLL | ES_LEFT | ES_MULTILINE |
-					  ES_AUTOHSCROLL | ES_AUTOVSCROLL, 1050, 50, 380, 440, hWnd, NULL, hInstance, NULL);
+			WS_VSCROLL | ES_LEFT | ES_MULTILINE |
+			ES_AUTOHSCROLL | ES_AUTOVSCROLL, 1050, 50, 380, 440, hWnd, NULL, hInstance, NULL);
 
 	CreateWindowW(_T("Button"), _T("List Airports"), WS_VISIBLE | WS_CHILD, 1050, 500, 120, 30, hWnd, (HMENU)LIST_AIRPORTS, NULL, NULL);
 	CreateWindowW(_T("Button"), _T("List Planes"), WS_VISIBLE | WS_CHILD, 1172, 500, 120, 30, hWnd, (HMENU)LIST_PLANES, NULL, NULL);
 	CreateWindowW(_T("Button"), _T("List Passangers"), WS_VISIBLE | WS_CHILD, 1294, 500, 120, 30, hWnd, (HMENU)LIST_PASSANGERS, NULL, NULL);
 	CreateWindowW(_T("Button"), _T("Accept"), WS_VISIBLE | WS_CHILD, 1050, 532, 120, 30, hWnd, (HMENU)ACCEPT, NULL, NULL);
 	main_struct->accept_window = CreateWindowW(_T("Static"), _T("New Planes: on"), WS_VISIBLE | WS_CHILD,
-											   1172, 532, 120, 35, hWnd, NULL, NULL, NULL);
+		1172, 532, 120, 35, hWnd, NULL, NULL, NULL);
 }
 
 LRESULT CALLBACK map_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -227,67 +226,67 @@ LRESULT CALLBACK map_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
 	}
 
 	switch (msg) {
-		case WM_MOUSEMOVE:
-		{ // Mostrar informação do avião
-			main_struct->mouse_hover = true;
-			main_struct->mouse_click = false;
-			get_cursor_pos(&main_struct->mouse_pos);
+	case WM_MOUSEMOVE:
+	{ // Mostrar informação do avião
+		main_struct->mouse_hover = true;
+		main_struct->mouse_click = false;
+		get_cursor_pos(&main_struct->mouse_pos);
 
-			Plane* plane = control->get_closest_plane(main_struct->mouse_pos, ICON_SIZE / 2);
-			if (plane != nullptr && plane->is_flying)
-			{
-				const auto list = control->get_passengers_on_plane(plane->offset);
-				tstringstream stream;
-				
-				stream << _T("\nPlane-> id: ") << plane->offset << END_LINE <<
-					_T("\r\t Passengers: ") << (list == nullptr ? 0 : list->size()) <<
-					_T("\r\t Flying from '") << control->get_airport(plane->origin_airport_id)->name <<
-					_T("'\r\t To '") << control->get_airport(plane->destiny_airport_id)->name << _T("'") << END_LINE;
-				
-				SetWindowTextW(main_struct->list_info_text_field, stream.str().c_str());
-			}
+		Plane* plane = control->get_closest_plane(main_struct->mouse_pos, ICON_SIZE / 2);
+		if (plane != nullptr && plane->is_flying)
+		{
+			const auto list = control->get_passengers_on_plane(plane->offset);
+			tstringstream stream;
 
-			break;
-		}
-		case WM_LBUTTONDOWN:
-		{ // Mostrar informação de um aeroporto
-			main_struct->mouse_click = true;
-			main_struct->mouse_hover = false;
-			get_cursor_pos(&main_struct->mouse_pos);
+			stream << _T("\nPlane-> id: ") << plane->offset << END_LINE <<
+				_T("\r\t Passengers: ") << (list == nullptr ? 0 : list->size()) <<
+				_T("\r\t Flying from '") << control->get_airport(plane->origin_airport_id)->name <<
+				_T("'\r\t To '") << control->get_airport(plane->destiny_airport_id)->name << _T("'") << END_LINE;
 
-
-			Airport* airport = control->get_closest_airport(main_struct->mouse_pos, ICON_SIZE / 2);
-			if (airport != nullptr)
-			{
-				tstringstream stream;
-				stream << _T("Airport-> name: ") << airport->name << END_LINE <<
-					_T("\r\tPlanes quantity: ") << airport->planes.size() <<
-					_T("\r\tPeople quantity: ") << airport->passengers.size() << END_LINE;
-
-				SetWindowTextW(main_struct->list_info_text_field, stream.str().c_str());
-			}
-
-			break;
+			SetWindowTextW(main_struct->list_info_text_field, stream.str().c_str());
 		}
 
-		case WM_ERASEBKGND:
-			break;
+		break;
+	}
+	case WM_LBUTTONDOWN:
+	{ // Mostrar informação de um aeroporto
+		main_struct->mouse_click = true;
+		main_struct->mouse_hover = false;
+		get_cursor_pos(&main_struct->mouse_pos);
 
-		case WM_NCPAINT: {
-			HDC hdc = BeginPaint(hWnd, &paint_struct);
 
-			BitBlt(hdc, 0, 0, MAP_SIZE, MAP_SIZE, main_struct->double_buffer_dc, 0, 0, SRCCOPY);
+		Airport* airport = control->get_closest_airport(main_struct->mouse_pos, ICON_SIZE / 2);
+		if (airport != nullptr)
+		{
+			tstringstream stream;
+			stream << _T("Airport-> name: ") << airport->name << END_LINE <<
+				_T("\r\tPlanes quantity: ") << airport->planes.size() <<
+				_T("\r\tPeople quantity: ") << airport->get_passengers_count() << END_LINE;
 
-			DeleteDC(hdc);
-			EndPaint(hWnd, &paint_struct);
-			break;
+			SetWindowTextW(main_struct->list_info_text_field, stream.str().c_str());
 		}
-		case WM_NCDESTROY:
-			DeleteDC(main_struct->double_buffer_dc);
-			DeleteObject(main_struct->double_buffer_bitmap);
-			break;
-		default:
-			return DefWindowProc(hWnd, msg, wParam, lParam);
+
+		break;
+	}
+
+	case WM_ERASEBKGND:
+		break;
+
+	case WM_NCPAINT: {
+		HDC hdc = BeginPaint(hWnd, &paint_struct);
+
+		BitBlt(hdc, 0, 0, MAP_SIZE, MAP_SIZE, main_struct->double_buffer_dc, 0, 0, SRCCOPY);
+
+		DeleteDC(hdc);
+		EndPaint(hWnd, &paint_struct);
+		break;
+	}
+	case WM_NCDESTROY:
+		DeleteDC(main_struct->double_buffer_dc);
+		DeleteObject(main_struct->double_buffer_bitmap);
+		break;
+	default:
+		return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
 	return TRUE;
 }
