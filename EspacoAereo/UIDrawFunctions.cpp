@@ -40,7 +40,7 @@ DWORD WINAPI draw_map_thread(LPVOID param) {
 		DWORD result = WaitForSingleObject(control->shutdown_event, REFRESH_WAIT);
 		if (result != WAIT_OBJECT_0 && result != WAIT_TIMEOUT)
 			break;
-	
+
 		update_map_area(stuff);
 	}
 	return 0;
@@ -113,23 +113,23 @@ TSTRING print_passengers(ControlMain* control) {
 	return stream.str();
 }
 
-void set_accept_state(HANDLES_N_STUFF * handles)
-{
+void set_accept_state(HANDLES_N_STUFF* handles) {
 	ControlMain* control = handles->control;
-	
-	if (control->change_accept_state())
-	{
-		if (control->accept_state)
-		{
+
+	if (control->change_accept_state()) {
+		if (control->accept_state) {
 			SetWindowTextW(handles->accept_window, _T("New Planes: on"));
-		}
-		else
-		{
+		} else {
 			SetWindowTextW(handles->accept_window, _T("New Planes: off"));
 		}
-	}
-	else
-	{
+	} else {
 		SetWindowTextW(handles->accept_window, _T("Something went wrong locking plane entering"));
 	}
+}
+
+void get_cursor_pos(Position* position) {
+	POINT point;
+	GetCursorPos(&point);
+	position->x = point.x;
+	position->y = point.y - WINDOW_BAR_HEIGHT;
 }

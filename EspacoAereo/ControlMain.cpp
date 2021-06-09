@@ -49,7 +49,7 @@ bool ControlMain::add_airport(const TCHAR* name, int x, int y) {
 	Position position;
 	position.x = x;
 	position.y = y;
-	
+
 	for (auto pair : this->airports) {
 		Airport* airport = pair.second;
 		if (airport->name == name || airport->position.x == x && airport->position.y == y)
@@ -82,8 +82,8 @@ void ControlMain::plane_left_airport(PLANE_ID plane_offset) {
 	Plane* plane = get_plane(plane_offset);
 	Airport* airport = get_airport(plane->origin_airport_id);
 
-	if (plane == nullptr || airport == nullptr) return; // pode acontecer se o controlo crashar e depois aberto sem terminar os aviões
-	
+	if (plane == nullptr || airport == nullptr) return; // pode acontecer se o controlo crashar e depois abrir sem terminar os aviões manualmente, porque eles não fazem heartbeat ao control
+
 	for (unsigned int i = 0; i < airport->planes.size(); ++i) {
 		Plane* cur_plane = airport->planes[i];
 		if (cur_plane == plane) {
@@ -95,6 +95,54 @@ void ControlMain::plane_left_airport(PLANE_ID plane_offset) {
 
 Plane* ControlMain::get_plane(PLANE_ID plane_offset) {
 	return &planes[plane_offset];
+}
+
+std::vector<Plane*> ControlMain::get_current_planes() {
+	vector<Plane*> list;
+	for (unsigned int i = 0; i < shared_control->max_plane_amount; ++i) {
+		Plane* cur_plane = get_plane(i);
+		if (cur_plane->in_use)
+			list.push_back(cur_plane);
+	}
+	return list;
+}
+
+Airport* ControlMain::get_closest_airport(const Position& position, int threshold) {
+	const Position& o1 = position;
+	Airport* closest = nullptr;
+	int closest_distance = MAP_SIZE * 2;
+
+	for (auto pair : this->airports) {
+		const Position& o2 = pair.second->position;
+
+		if (abs(o1.x - o2.x) <= threshold && abs(o1.y - o2.y) <= threshold) {
+			const auto cur_distance = grid_distance(o1, o2);
+			if (cur_distance < closest_distance) {
+				closest = pair.second;
+				closest_distance = cur_distance;
+			}
+		}
+	}
+	return closest;
+}
+
+Plane* ControlMain::get_closest_plane(const Position& position, int threshold) {
+	const Position& o1 = position;
+	Plane* closest = nullptr;
+	int closest_distance = MAP_SIZE * 2;
+
+	for (auto plane : get_current_planes()) {
+		const Position& o2 = plane->position;
+
+		if (abs(o1.x - o2.x) <= threshold && abs(o1.y - o2.y) <= threshold) {
+			const auto cur_distance = grid_distance(o1, o2);
+			if (cur_distance < closest_distance) {
+				closest = plane;
+				closest_distance = cur_distance;
+			}
+		}
+	}
+	return closest;
 }
 
 bool ControlMain::add_passenger(Passenger* passenger) {
@@ -194,7 +242,7 @@ bool ControlMain::_send_passenger_message(Passenger* passenger, const PassengerM
 
 void ControlMain::remove_passenger(Passenger* passenger) {
 	if (passenger == nullptr) return;
-	
+
 	all_passengers.erase(passenger->id);
 
 	vector<PASSENGER_ID>* list = nullptr;
@@ -215,25 +263,16 @@ void ControlMain::remove_passenger(Passenger* passenger) {
 	delete passenger;
 }
 
-bool ControlMain::change_accept_state()
-{
+bool ControlMain::change_accept_state() {
 	HANDLE mutex = plane_entering_lock;
 
 	if (accept_state) {
 		DWORD result = WaitForSingleObject(mutex, 2000);
 		if (result != WAIT_OBJECT_0) {
-			//continue;
-			//SetWindowTextW(main_struct->accept_window, _T("Something went wrong locking plane entering"));
 			return false;
-			
 		}
-		//SetWindowTextW(main_struct->accept_window, _T("New Planes: off"));
-
-	}
-	else {
+	} else {
 		ReleaseMutex(mutex);
-		//SetWindowTextW(main_struct->accept_window, _T("New Planes: on"));
-
 	}
 	accept_state = !accept_state;
 	return true;

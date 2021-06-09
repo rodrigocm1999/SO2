@@ -49,6 +49,10 @@ public:
 	Airport* get_airport(AIRPORT_ID id);
 	void plane_left_airport(PLANE_ID plane_offset);
 	Plane* get_plane(PLANE_ID plane_offset);
+	std::vector<Plane*> get_current_planes();
+	
+	Airport* get_closest_airport(const Position& position, int threshold);
+	Plane* get_closest_plane(const Position& position, int threshold);
 
 	bool add_passenger(Passenger* passenger);
 	CircularBuffer* get_plane_buffer(PLANE_ID offset) const;
@@ -68,7 +72,7 @@ public:
 
 	bool change_accept_state();
 
+
 private:
 	static bool _send_passenger_message(Passenger* passenger, const PassengerMessage& message);
 };
-

@@ -18,7 +18,6 @@
 #define ACCEPT 5
 
 
-
 #define END_LINE _T("\r\n")
 
 
@@ -164,7 +163,6 @@ LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 				}
 
 				case ACCEPT:
-					//TODO accept part
 					set_accept_state(main_struct);
 					break;
 			}
@@ -185,9 +183,6 @@ LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 }
 
 void AddControls(HWND hWnd, HINSTANCE hInstance, HANDLES_N_STUFF* main_struct) {
-
-
-
 	main_struct->map_area =
 		CreateWindowW(_T("Static"), _T(""), WS_VISIBLE | WS_CHILD | WS_BORDER,
 					  0, 0, MAP_SIZE, MAP_SIZE, hWnd, NULL, NULL, NULL);
@@ -209,12 +204,13 @@ void AddControls(HWND hWnd, HINSTANCE hInstance, HANDLES_N_STUFF* main_struct) {
 	CreateWindowW(_T("Button"), _T("List Passangers"), WS_VISIBLE | WS_CHILD, 1294, 500, 120, 30, hWnd, (HMENU)LIST_PASSANGERS, NULL, NULL);
 	CreateWindowW(_T("Button"), _T("Accept"), WS_VISIBLE | WS_CHILD, 1050, 532, 120, 30, hWnd, (HMENU)ACCEPT, NULL, NULL);
 	main_struct->accept_window = CreateWindowW(_T("Static"), _T("New Planes: on"), WS_VISIBLE | WS_CHILD,
-		1172, 532, 120, 35, hWnd, NULL, NULL, NULL);
+											   1172, 532, 120, 35, hWnd, NULL, NULL, NULL);
 }
 
 LRESULT CALLBACK map_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	PAINTSTRUCT paint_struct;
 	HANDLES_N_STUFF* main_struct = &stuff;
+	ControlMain* control = main_struct->control;
 
 	static bool already_created = false;
 
@@ -231,6 +227,32 @@ LRESULT CALLBACK map_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
 	}
 
 	switch (msg) {
+		case WM_MOUSEMOVE:
+		{ // Mostrar informação do avião
+			main_struct->mouse_hover = true;
+			main_struct->mouse_click = false;
+			get_cursor_pos(&main_struct->mouse_pos);
+
+			Plane* plane = control->get_closest_plane(main_struct->mouse_pos, ICON_SIZE / 2);
+			if (plane == nullptr) break;
+
+			break;
+		}
+		case WM_LBUTTONDOWN:
+		{ // Mostrar informação de um aeroporto
+			main_struct->mouse_click = true;
+			main_struct->mouse_hover = false;
+			get_cursor_pos(&main_struct->mouse_pos);
+
+
+			Airport* airport = control->get_closest_airport(main_struct->mouse_pos, ICON_SIZE / 2);
+			if (airport == nullptr) break;
+
+			MessageBox(hWnd, _T("Stupid ass?"), _T("Exit"), MB_OK);
+
+			break;
+		}
+
 		case WM_ERASEBKGND:
 			break;
 

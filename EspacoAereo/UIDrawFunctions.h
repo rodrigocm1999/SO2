@@ -9,6 +9,7 @@
 
 #define END_LINE _T("\r\n")
 
+#define WINDOW_BAR_HEIGHT 32
 
 #define TSTRING std::basic_string<TCHAR>
 
@@ -24,7 +25,7 @@ typedef struct {
 
 	HWND window;
 	HWND map_area;
-	
+
 	HWND airport_name_text_field;
 	HWND list_info_text_field;
 	HWND accept_window;
@@ -32,6 +33,10 @@ typedef struct {
 	HBITMAP airport_icon;
 	HBITMAP plane_icon;
 
+	BOOL mouse_hover;
+	BOOL mouse_click;
+
+	Position mouse_pos;
 
 	HANDLE draw_thread_handle;
 	HDC double_buffer_dc;
@@ -55,3 +60,6 @@ TSTRING print_planes(ControlMain* control);
 TSTRING print_passengers(ControlMain* control);
 
 void set_accept_state(HANDLES_N_STUFF* handles);
+
+
+void get_cursor_pos(Position* position);
