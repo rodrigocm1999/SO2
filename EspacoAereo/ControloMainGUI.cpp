@@ -234,7 +234,18 @@ LRESULT CALLBACK map_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
 			get_cursor_pos(&main_struct->mouse_pos);
 
 			Plane* plane = control->get_closest_plane(main_struct->mouse_pos, ICON_SIZE / 2);
-			if (plane == nullptr) break;
+			if (plane != nullptr && plane->is_flying)
+			{
+				const auto list = control->get_passengers_on_plane(plane->offset);
+				tstringstream stream;
+				
+				stream << _T("\nPlane-> id: ") << plane->offset << END_LINE <<
+					_T("\r\t Passengers: ") << (list == nullptr ? 0 : list->size()) <<
+					_T("\r\t Flying from '") << control->get_airport(plane->origin_airport_id)->name <<
+					_T("'\r\t To '") << control->get_airport(plane->destiny_airport_id)->name << _T("'") << END_LINE;
+				
+				SetWindowTextW(main_struct->list_info_text_field, stream.str().c_str());
+			}
 
 			break;
 		}
@@ -246,9 +257,15 @@ LRESULT CALLBACK map_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
 
 
 			Airport* airport = control->get_closest_airport(main_struct->mouse_pos, ICON_SIZE / 2);
-			if (airport == nullptr) break;
+			if (airport != nullptr)
+			{
+				tstringstream stream;
+				stream << _T("Airport-> name: ") << airport->name << END_LINE <<
+					_T("\r\tPlanes quantity: ") << airport->planes.size() <<
+					_T("\r\tPeople quantity: ") << airport->passengers.size() << END_LINE;
 
-			MessageBox(hWnd, _T("Stupid ass?"), _T("Exit"), MB_OK);
+				SetWindowTextW(main_struct->list_info_text_field, stream.str().c_str());
+			}
 
 			break;
 		}

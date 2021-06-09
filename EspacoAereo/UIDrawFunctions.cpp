@@ -104,7 +104,7 @@ TSTRING print_planes(ControlMain* control) {
 TSTRING print_passengers(ControlMain* control) {
 	tstringstream stream;
 	for (auto passenger : control->all_passengers) {
-		stream << _T("nPassag->id: ") << passenger.second->id
+		stream << _T("Passag->id: ") << passenger.second->id
 			<< _T(", name: ") << passenger.second->name
 			<< _T(", origin: ") << passenger.second->origin->name
 			<< _T(", destiny:") << passenger.second->destiny->name << END_LINE;
