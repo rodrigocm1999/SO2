@@ -31,8 +31,6 @@
 
 using namespace std;
 
-control_gui_handles* global_struct_ptr;
-
 void AddControls(HWND hWnd, HINSTANCE hInstance, control_gui_handles* main_struct);
 
 LRESULT CALLBACK window_event_handler(HWND, UINT, WPARAM, LPARAM);
@@ -56,8 +54,8 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 
 	control_gui_handles vars;
 	vars.hInstance = hInst;
-	global_struct_ptr = &vars;
-	
+	ControlMain::temp_ptr = &vars;
+
 	hWnd = CreateWindow(_T("windowClass"), _T("Controlo"), WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_BORDER | WS_MAXIMIZE,
 						0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), HWND_DESKTOP, NULL, hInst, 0);
 	vars.window = hWnd;
@@ -110,13 +108,15 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 	control_gui_handles* main_struct = (control_gui_handles*)GetWindowLongPtr(hWnd, 0);
-	
+
 	static bool already_created = false;
 
 	if (main_struct != nullptr && !already_created) {
+		//AddControls(hWnd, main_struct->hInstance, main_struct); // Não funciona, ao criar os controlos aqui,
+		//		embora apenas corra 1 vez, os controlos ficam com problemas
 		already_created = true; // Já não é necessário
 	}
-	
+
 	switch (msg) {
 		case WM_COMMAND:
 			switch (wParam) {
@@ -177,17 +177,19 @@ LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 				PostQuitMessage(0);
 			}
 			break;
-		case WM_CREATE:
-			AddControls(hWnd, global_struct_ptr->hInstance, global_struct_ptr);
+		case WM_CREATE: {
+			auto handles = (control_gui_handles*) ControlMain::temp_ptr;
+			AddControls(hWnd, handles->hInstance, handles);
+			ControlMain::temp_ptr = nullptr;
 			// Se não forem adicionados na mensagem do create ficam a piscar e com comportamento estranho
 			// Por isso foi criada este ponteiro global apenas para poder chamar a função, já que o create
 			//		corre antes de ser possível chamar o SetWindowLongPtr()
 			break;
-
+		}
 		default:
 			return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
-	
+
 	return TRUE;
 }
 

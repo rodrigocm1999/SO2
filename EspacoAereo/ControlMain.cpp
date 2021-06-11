@@ -6,6 +6,8 @@
 
 using namespace std;
 
+LPVOID ControlMain::temp_ptr;
+
 ControlMain::ControlMain(SharedControl* shared_control, Plane* planes, HANDLE handle_mapped_file,
 						 HANDLE handle_control_named_pipe) :
 	shared_control(shared_control), planes(planes),
