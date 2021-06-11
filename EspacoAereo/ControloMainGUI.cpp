@@ -31,9 +31,9 @@
 
 using namespace std;
 
-HANDLES_N_STUFF* global_struct_ptr;
+control_gui_handles* global_struct_ptr;
 
-void AddControls(HWND hWnd, HINSTANCE hInstance, HANDLES_N_STUFF* main_struct);
+void AddControls(HWND hWnd, HINSTANCE hInstance, control_gui_handles* main_struct);
 
 LRESULT CALLBACK window_event_handler(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK map_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -49,12 +49,12 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	window_app.hInstance = hInst;
 	window_app.lpszClassName = _T("windowClass");
 	window_app.lpfnWndProc = window_event_handler;
-	window_app.cbWndExtra = sizeof(HANDLES_N_STUFF*);
+	window_app.cbWndExtra = sizeof(control_gui_handles*);
 
 	if (!RegisterClassEx(&window_app))
 		return -1;
 
-	HANDLES_N_STUFF vars;
+	control_gui_handles vars;
 	vars.hInstance = hInst;
 	global_struct_ptr = &vars;
 	
@@ -109,7 +109,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 
 LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
-	HANDLES_N_STUFF* main_struct = (HANDLES_N_STUFF*)GetWindowLongPtr(hWnd, 0);
+	control_gui_handles* main_struct = (control_gui_handles*)GetWindowLongPtr(hWnd, 0);
 	
 	static bool already_created = false;
 
@@ -191,7 +191,7 @@ LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 	return TRUE;
 }
 
-void AddControls(HWND hWnd, HINSTANCE hInstance, HANDLES_N_STUFF* main_struct) {
+void AddControls(HWND hWnd, HINSTANCE hInstance, control_gui_handles* main_struct) {
 	main_struct->map_area =
 		CreateWindowW(_T("Static"), _T(""), WS_VISIBLE | WS_CHILD | WS_BORDER,
 					  0, 0, MAP_SIZE, MAP_SIZE, hWnd, NULL, hInstance, NULL);
@@ -220,7 +220,7 @@ void AddControls(HWND hWnd, HINSTANCE hInstance, HANDLES_N_STUFF* main_struct) {
 
 LRESULT CALLBACK map_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	PAINTSTRUCT paint_struct;
-	HANDLES_N_STUFF* main_struct = (HANDLES_N_STUFF*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+	control_gui_handles* main_struct = (control_gui_handles*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
 	static bool already_created = false;
 

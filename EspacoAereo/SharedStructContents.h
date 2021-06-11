@@ -65,12 +65,12 @@ typedef union { // check if needs more stuff to send
 	TCHAR airport_name[BUFFER_SIZE];
 	Position position;
 	TCHAR error_message[BUFFER_SIZE];
-}Data;
+}plane_control_data;
 
 typedef struct PlaneControlMessage {
 	PLANE_ID plane_offset;
 	int type;
-	Data data;
+	plane_control_data data;
 }PlaneControlMessage;
 
 
