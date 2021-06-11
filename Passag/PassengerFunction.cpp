@@ -113,7 +113,7 @@ DWORD WINAPI receive_exit_command(LPVOID param) {
 	while (!passag_struct->exit) {
 		TSTRING str;
 		tcin >> str;
-		if (str == _T("exit")) { // TODO o que acontece quando está em andamento no avião????
+		if (str == _T("exit")) {
 			passag_struct->timeout = true;
 			exit_passenger(passag_struct);
 		}

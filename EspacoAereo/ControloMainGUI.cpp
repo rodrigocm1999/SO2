@@ -57,7 +57,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	HANDLES_N_STUFF vars;
 	vars.hInstance = hInst;
 	global_struct_ptr = &vars;
-	
+
 	hWnd = CreateWindow(_T("windowClass"), _T("Controlo"), WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_BORDER | WS_MAXIMIZE,
 						0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), HWND_DESKTOP, NULL, hInst, 0);
 	vars.window = hWnd;
@@ -79,7 +79,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 			vars.draw_thread_handle = create_thread(draw_map_thread, &vars);
 
 
-			SetWindowLongPtr(hWnd, 0, (LONG_PTR)&vars); // TODO make this works
+			SetWindowLongPtr(hWnd, 0, (LONG_PTR)&vars);
 
 			while (GetMessage(&msg, nullptr, NULL, NULL)) {
 				TranslateMessage(&msg);
@@ -110,13 +110,16 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 	HANDLES_N_STUFF* main_struct = (HANDLES_N_STUFF*)GetWindowLongPtr(hWnd, 0);
-	
+
 	static bool already_created = false;
 
 	if (main_struct != nullptr && !already_created) {
+		//AddControls(hWnd, main_struct->hInstance, main_struct); // Não funciona, ao criar os controlos aqui,
+		//		embora apenas corra 1 vez, os controlos ficam com problemas, assim tivemos de ter 1 ponteiro
+		//		global para poder chamar a AddControlos no WM_CREATE
 		already_created = true; // Já não é necessário
 	}
-	
+
 	switch (msg) {
 		case WM_COMMAND:
 			switch (wParam) {
@@ -179,6 +182,7 @@ LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 			break;
 		case WM_CREATE:
 			AddControls(hWnd, global_struct_ptr->hInstance, global_struct_ptr);
+			global_struct_ptr = nullptr;
 			// Se não forem adicionados na mensagem do create ficam a piscar e com comportamento estranho
 			// Por isso foi criada este ponteiro global apenas para poder chamar a função, já que o create
 			//		corre antes de ser possível chamar o SetWindowLongPtr()
@@ -187,7 +191,7 @@ LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 		default:
 			return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
-	
+
 	return TRUE;
 }
 
