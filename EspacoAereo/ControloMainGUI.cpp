@@ -201,21 +201,21 @@ void AddControls(HWND hWnd, HINSTANCE hInstance, HANDLES_N_STUFF* main_struct) {
 
 
 	main_struct->airport_name_text_field =
-		CreateWindowW(_T("EDIT"), 0, WS_VISIBLE | WS_CHILD | WS_BORDER, 1172, 10, 250, 30, hWnd, NULL, hInstance, NULL);
+		CreateWindowW(_T("EDIT"), 0, WS_VISIBLE | WS_CHILD | WS_BORDER, 1172, 10, 400, 30, hWnd, NULL, hInstance, NULL);
 
 	CreateWindowW(_T("Button"), _T("Add Airport"), WS_VISIBLE | WS_CHILD, 1050, 10, 120, 30, hWnd, (HMENU)ADD_AIRPORT, hInstance, NULL);
 
 	main_struct->list_info_text_field =
-		CreateWindowW(_T("Edit"), 0, WS_VISIBLE | WS_CHILD | WS_BORDER | WS_HSCROLL |
+		CreateWindowW(_T("EDIT"), 0, WS_VISIBLE | WS_CHILD | WS_BORDER | WS_HSCROLL |
 					  WS_VSCROLL | ES_LEFT | ES_MULTILINE |
-					  ES_AUTOHSCROLL | ES_AUTOVSCROLL, 1050, 50, 380, 440, hWnd, NULL, hInstance, NULL);
+					  ES_AUTOHSCROLL | ES_AUTOVSCROLL, 1050, 50, 550, 450, hWnd, NULL, hInstance, NULL);
 
 	CreateWindowW(_T("Button"), _T("List Airports"), WS_VISIBLE | WS_CHILD, 1050, 500, 120, 30, hWnd, (HMENU)LIST_AIRPORTS, hInstance, NULL);
-	CreateWindowW(_T("Button"), _T("List Planes"), WS_VISIBLE | WS_CHILD, 1172, 500, 120, 30, hWnd, (HMENU)LIST_PLANES, hInstance, NULL);
-	CreateWindowW(_T("Button"), _T("List Passangers"), WS_VISIBLE | WS_CHILD, 1294, 500, 120, 30, hWnd, (HMENU)LIST_PASSANGERS, hInstance, NULL);
-	CreateWindowW(_T("Button"), _T("Accept"), WS_VISIBLE | WS_CHILD, 1050, 532, 120, 30, hWnd, (HMENU)ACCEPT, hInstance, NULL);
+	CreateWindowW(_T("Button"), _T("List Planes"), WS_VISIBLE | WS_CHILD, 1265, 500, 120, 30, hWnd, (HMENU)LIST_PLANES, hInstance, NULL);
+	CreateWindowW(_T("Button"), _T("List Passangers"), WS_VISIBLE | WS_CHILD, 1480, 500, 120, 30, hWnd, (HMENU)LIST_PASSANGERS, hInstance, NULL);
+	CreateWindowW(_T("Button"), _T("Accept"), WS_VISIBLE | WS_CHILD, 1050, 650, 120, 30, hWnd, (HMENU)ACCEPT, hInstance, NULL);
 	main_struct->accept_window = CreateWindowW(_T("Static"), _T("New Planes: on"), WS_VISIBLE | WS_CHILD,
-											   1172, 532, 120, 35, hWnd, NULL, hInstance, NULL);
+											   1172, 650, 120, 35, hWnd, NULL, hInstance, NULL);
 }
 
 LRESULT CALLBACK map_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {

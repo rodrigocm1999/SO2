@@ -187,7 +187,7 @@ int _tmain(int argc, TCHAR** argv) {
 					tcout << _T("Error sending timeout alert to control -> ") << GetLastError() << endl;
 				}
 			}
-			tcout << _T("Person Gave up waiting for a plane") << endl;
+			tcout << _T("Person Gave up") << endl;
 		}
 		ReleaseMutex(mutex_new_passenger);
 	} else {
