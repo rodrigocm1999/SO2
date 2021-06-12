@@ -31,7 +31,7 @@
 
 using namespace std;
 
-void AddControls(HWND hWnd, HINSTANCE hInstance, control_gui_handles* main_struct);
+void AddControls(HWND hWnd, HINSTANCE hInstance, ControlUIHandles* main_struct);
 
 LRESULT CALLBACK window_event_handler(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK map_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -47,12 +47,12 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	window_app.hInstance = hInst;
 	window_app.lpszClassName = _T("windowClass");
 	window_app.lpfnWndProc = window_event_handler;
-	window_app.cbWndExtra = sizeof(control_gui_handles*);
+	window_app.cbWndExtra = sizeof(ControlUIHandles*);
 
 	if (!RegisterClassEx(&window_app))
 		return -1;
 
-	control_gui_handles vars;
+	ControlUIHandles vars;
 	vars.hInstance = hInst;
 	ControlMain::temp_ptr = &vars;
 
@@ -107,7 +107,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 
 LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
-	control_gui_handles* main_struct = (control_gui_handles*)GetWindowLongPtr(hWnd, 0);
+	ControlUIHandles* main_struct = (ControlUIHandles*)GetWindowLongPtr(hWnd, 0);
 
 	static bool already_created = false;
 
@@ -178,7 +178,7 @@ LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 			}
 			break;
 		case WM_CREATE: {
-			auto handles = (control_gui_handles*) ControlMain::temp_ptr;
+			auto handles = (ControlUIHandles*) ControlMain::temp_ptr;
 			AddControls(hWnd, handles->hInstance, handles);
 			ControlMain::temp_ptr = nullptr;
 			// Se não forem adicionados na mensagem do create ficam a piscar e com comportamento estranho
@@ -193,7 +193,7 @@ LRESULT CALLBACK window_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 	return TRUE;
 }
 
-void AddControls(HWND hWnd, HINSTANCE hInstance, control_gui_handles* main_struct) {
+void AddControls(HWND hWnd, HINSTANCE hInstance, ControlUIHandles* main_struct) {
 	main_struct->map_area =
 		CreateWindowW(_T("Static"), _T(""), WS_VISIBLE | WS_CHILD | WS_BORDER,
 					  0, 0, MAP_SIZE, MAP_SIZE, hWnd, NULL, hInstance, NULL);
@@ -222,7 +222,7 @@ void AddControls(HWND hWnd, HINSTANCE hInstance, control_gui_handles* main_struc
 
 LRESULT CALLBACK map_event_handler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	PAINTSTRUCT paint_struct;
-	control_gui_handles* main_struct = (control_gui_handles*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+	ControlUIHandles* main_struct = (ControlUIHandles*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
 	static bool already_created = false;
 

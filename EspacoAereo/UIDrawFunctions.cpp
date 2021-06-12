@@ -3,7 +3,7 @@
 using namespace std;
 
 
-void draw_map(HDC bitmap_dc, control_gui_handles* handles) {
+void draw_map(HDC bitmap_dc, ControlUIHandles* handles) {
 
 	ControlMain* control = handles->control;
 
@@ -32,7 +32,7 @@ void draw_map(HDC bitmap_dc, control_gui_handles* handles) {
 }
 
 DWORD WINAPI draw_map_thread(LPVOID param) {
-	control_gui_handles* stuff = (control_gui_handles*)param;
+	ControlUIHandles* stuff = (ControlUIHandles*)param;
 	ControlMain* control = stuff->control;
 
 	while (!control->exit) {
@@ -46,7 +46,7 @@ DWORD WINAPI draw_map_thread(LPVOID param) {
 	return 0;
 }
 
-void update_map_area(control_gui_handles* stuff) {
+void update_map_area(ControlUIHandles* stuff) {
 	draw_map(stuff->double_buffer_dc, stuff);
 	InvalidateRect(stuff->window, nullptr, false);
 }
@@ -113,7 +113,7 @@ TSTRING print_passengers(ControlMain* control) {
 	return stream.str();
 }
 
-void set_accept_state(control_gui_handles* handles) {
+void set_accept_state(ControlUIHandles* handles) {
 	ControlMain* control = handles->control;
 
 	if (control->change_accept_state()) {

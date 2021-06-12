@@ -43,7 +43,7 @@ typedef struct {
 	HBITMAP double_buffer_bitmap;
 
 	ControlMain* control;
-} control_gui_handles;
+} ControlUIHandles;
 
 
 #define ICON_SIZE 28
@@ -51,15 +51,15 @@ typedef struct {
 
 DWORD WINAPI draw_map_thread(LPVOID param);
 
-void update_map_area(control_gui_handles* stuff);
-void draw_map(HDC bitmap_dc, control_gui_handles* handles);
+void update_map_area(ControlUIHandles* stuff);
+void draw_map(HDC bitmap_dc, ControlUIHandles* handles);
 void draw_img(HBITMAP h_bitmap, HDC bitmap_dc, HDC aux_dc, const Position& pos);
 
 TSTRING print_airports(ControlMain* control);
 TSTRING print_planes(ControlMain* control);
 TSTRING print_passengers(ControlMain* control);
 
-void set_accept_state(control_gui_handles* handles);
+void set_accept_state(ControlUIHandles* handles);
 
 
 void get_cursor_pos(Position* position);
